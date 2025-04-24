@@ -1,0 +1,25 @@
+users components:
+*user
+*product
+*product_list
+*search_bar
+*filtering
+*menu
+*cart
+*cart_list
+*payment_methods
+*addresses
+*done deals
+*order_tracking
+
+
+admin components:
+*prdouct
+*product_list
+*order
+*order_list
+*shipments
+*user_management
+*issue resolutions
+
+services 

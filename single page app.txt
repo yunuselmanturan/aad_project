@@ -1,0 +1,24 @@
+single page app
+authentication and authorization(users and admins)
+authguard
+
+Features: 
+-product brows
+-comparison and review
+-shopping cart and checkout process
+-order tracking
+
+admin port:
+-Product and inventory management
+-order&shipment tracking
+-user management
+-issue resolution for payments and orders
+
+backend:
+-user management
+-product&order management
+-payment processing
+-admin portal functionalities
+-database(mysql)with hibernet orm
+
+
