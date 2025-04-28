@@ -1,1 +1,18 @@
-<p>seller-product-list works!</p>
+<!-- features/seller-dashboard/components/products/seller-product-list/seller-product-list.component.html -->
+<h2>My Products</h2>
+<button (click)="addNew()">Add New Product</button>
+<app-loading-spinner *ngIf="loading"></app-loading-spinner>
+<app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+<table *ngIf="!loading && products.length" class="prod-table">
+  <tr><th>Name</th><th>Price</th><th>Category</th><th></th></tr>
+  <tr *ngFor="let p of products">
+    <td>{{ p.name }}</td>
+    <td>{{ p.price | money }}</td>
+    <td>{{ p.category }}</td>
+    <td>
+      <button (click)="editProduct(p)">Edit</button>
+      <button (click)="deleteProduct(p)">Delete</button>
+    </td>
+  </tr>
+</table>
+<p *ngIf="!loading && !products.length">No products yet.</p>

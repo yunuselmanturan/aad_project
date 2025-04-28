@@ -1,1 +1,27 @@
-<p>order-detail works!</p>
+<!-- features/orders/components/order-detail/order-detail.component.html -->
+<div *ngIf="order; else errorOrLoading">
+  <h2>Order #{{ order.id }}</h2>
+  <p>Date: {{ order.orderDate | date:'fullDate' }}</p>
+  <p>Status: {{ order.status }}</p>
+  <h3>Items:</h3>
+  <ul>
+    <li *ngFor="let item of order.items">
+      Product #{{ item.productId }} - Qty: {{ item.quantity }} - Subtotal: {{ item.price * item.quantity | money }}
+    </li>
+  </ul>
+  <p><strong>Total: {{ order.totalPrice | money }}</strong></p>
+  <div *ngIf="order.shippingAddress">
+    <h3>Shipping Information:</h3>
+    <p>{{ order.shippingAddress.fullName }}</p>
+    <p>{{ order.shippingAddress.address }}, {{ order.shippingAddress.city }}, {{ order.shippingAddress.postalCode }}, {{ order.shippingAddress.country }}</p>
+  </div>
+  <!-- If order.status indicates shipped and maybe there's tracking info, display it -->
+  <div *ngIf="order.status && order.status.includes('SHIPPED')">
+    <p>Your order has been shipped. It will arrive soon.</p>
+  </div>
+  <!-- If delivered and not reviewed, we could encourage review (not implemented) -->
+</div>
+<ng-template #errorOrLoading>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+  <app-loading-spinner *ngIf="!error"></app-loading-spinner>
+</ng-template>

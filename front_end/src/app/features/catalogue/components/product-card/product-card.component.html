@@ -1,1 +1,12 @@
-<p>product-card works!</p>
+<!-- features/catalogue/components/product-card/product-card.component.html -->
+<div class="product-card">
+  <a [routerLink]="['/catalogue', product.id]">
+    <img [src]="product.imageUrl || 'assets/placeholder.png'" [alt]="product.name" />
+    <h3>{{ product.name }}</h3>
+    <p>{{ product.price | money }}</p>
+  </a>
+  <div class="actions">
+    <button (click)="onAddToCartClick()">Add to Cart</button>
+    <button (click)="onCompareClick()">Compare</button>
+  </div>
+</div>

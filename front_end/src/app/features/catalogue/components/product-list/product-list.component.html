@@ -1,1 +1,28 @@
-<p>product-list works!</p>
+
+<!-- features/catalogue/components/product-list/product-list.component.html -->
+<div class="catalogue-container">
+  <!-- Search bar and category filter -->
+  <div class="toolbar">
+    <input type="text" placeholder="Search products..." (input)="onSearch($any($event.target).value)" />
+    <!-- Example category filter dropdown -->
+    <select (change)="onCategorySelected($any($event.target).value)">
+      <option value="">All Categories</option>
+      <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+    </select>
+  </div>
+
+  <!-- Product grid -->
+  <div class="product-grid">
+    <app-product-card *ngFor="let product of filteredProducts"
+                      [product]="product"
+                      (compare)="addToCompare(product)"
+                      (addToCart)="onAddToCart(product)">
+    </app-product-card>
+  </div>
+
+  <!-- Compare bar (if two products selected) -->
+  <div class="compare-bar" *ngIf="compareSelection.length">
+    <span *ngFor="let prod of compareSelection">{{ prod.name }}</span>
+    <button (click)="openCompareDialog()" [disabled]="compareSelection.length < 2">Compare</button>
+  </div>
+</div>

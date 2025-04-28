@@ -1,1 +1,18 @@
-<p>global-order-list works!</p>
+<!-- features/system-admin/components/global-orders/global-order-list/global-order-list.component.html -->
+<h2>All Orders</h2>
+<app-loading-spinner *ngIf="loading"></app-loading-spinner>
+<app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+<table *ngIf="!loading && orders.length" class="order-table">
+  <tr><th>Order #</th><th>User ID</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr>
+  <tr *ngFor="let o of orders">
+    <td>{{ o.id }}</td>
+    <td>{{ o.userId }}</td>
+    <td>{{ o.orderDate | date:'short' }}</td>
+    <td>{{ o.totalPrice | money }}</td>
+    <td>{{ o.status }}</td>
+    <td>
+      <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'DELIVERED'" (click)="cancelOrder(o)">Cancel</button>
+    </td>
+  </tr>
+</table>
+<p *ngIf="!loading && !orders.length">No orders found.</p>

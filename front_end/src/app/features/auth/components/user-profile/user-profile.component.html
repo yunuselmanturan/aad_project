@@ -1,1 +1,19 @@
-<p>user-profile works!</p>
+<!-- features/auth/components/user-profile/user-profile.component.html -->
+<h2>User Profile</h2>
+<div *ngIf="user; else noUser">
+  <form [formGroup]="profileForm">
+    <div>
+      <label>Name: </label>
+      <input formControlName="name" type="text" [disabled]="!editing">
+    </div>
+    <div>
+      <label>Email: </label>
+      <input formControlName="email" type="email" [disabled]="true">
+    </div>
+  </form>
+  <button *ngIf="!editing" (click)="enableEdit()">Edit</button>
+  <button *ngIf="editing" (click)="saveProfile()">Save</button>
+</div>
+<ng-template #noUser>
+  <p>User not found. Please log in.</p>
+</ng-template>

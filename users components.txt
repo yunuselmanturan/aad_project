@@ -6,7 +6,6 @@ users components:
 *filtering
 *menu
 *cart
-*cart_list
 *payment_methods
 *addresses
 *done deals

@@ -1,0 +1,8 @@
+/* features/catalogue/components/product-card/product-card.component.scss */
+.product-card {
+  border: 1px solid #ccc; padding: 1rem; width: 200px;
+  text-align: center; border-radius: 4px;
+}
+.product-card img { max-width: 100%; height: auto; }
+.product-card .actions { margin-top: 0.5rem; display: flex; justify-content: space-around; }
+.product-card button { font-size: 0.9rem; }

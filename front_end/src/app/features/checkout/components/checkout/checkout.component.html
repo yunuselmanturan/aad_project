@@ -1,1 +1,40 @@
-<p>checkout works!</p>
+<!-- features/checkout/components/checkout/checkout.component.html -->
+<h2>Checkout</h2>
+<form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label>Full Name</label>
+    <input formControlName="fullName" type="text" />
+    <div class="error" *ngIf="submitted && f['fullName'].invalid">Name is required.</div>
+  </div>
+  <div>
+    <label>Address</label>
+    <input formControlName="address" type="text" />
+    <div class="error" *ngIf="submitted && f['address'].invalid">Address is required.</div>
+  </div>
+  <div>
+    <label>City</label>
+    <input formControlName="city" type="text" />
+    <div class="error" *ngIf="submitted && f['city'].invalid">City is required.</div>
+  </div>
+  <div>
+    <label>Postal Code</label>
+    <input formControlName="postalCode" type="text" />
+    <div class="error" *ngIf="submitted && f['postalCode'].invalid">Postal code is required.</div>
+  </div>
+  <div>
+    <label>Country</label>
+    <input formControlName="country" type="text" />
+    <div class="error" *ngIf="submitted && f['country'].invalid">Country is required.</div>
+  </div>
+
+  <h3>Order Summary</h3>
+  <ul>
+    <li *ngFor="let item of cartItems">
+      {{ item.product.name }} (x{{ item.quantity }}) - {{ item.product.price * item.quantity | money }}
+    </li>
+  </ul>
+  <p>Total: <strong>{{ func() | money }}</strong></p>
+
+  <button type="submit">Place Order</button>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+</form>

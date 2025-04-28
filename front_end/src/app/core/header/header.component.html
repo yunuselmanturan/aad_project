@@ -1,1 +1,21 @@
-<p>header works!</p>
+<!-- core/header/header.component.html -->
+<nav class="navbar">
+  <a class="logo" routerLink="/">E-Shop</a>
+  <ul class="nav-links">
+    <li><a routerLink="/catalogue">Catalogue</a></li>
+    <li><a routerLink="/cart">Cart</a></li>
+    <li *ngIf="isLoggedIn"><a routerLink="/orders">My Orders</a></li>
+    <li *ngIf="isSeller"><a routerLink="/seller">Seller Dashboard</a></li>
+    <li *ngIf="isAdmin"><a routerLink="/admin">Admin Portal</a></li>
+  </ul>
+  <div class="auth-section">
+    <ng-container *ngIf="isLoggedIn; else guestLinks">
+      <span>Welcome, {{ username }}!</span>
+      <button (click)="logout()">Logout</button>
+    </ng-container>
+    <ng-template #guestLinks>
+      <a routerLink="/auth/login">Login</a>
+      <a routerLink="/auth/register">Register</a>
+    </ng-template>
+  </div>
+</nav>

@@ -1,1 +1,14 @@
-<p>order-history works!</p>
+<!-- features/orders/components/order-history/order-history.component.html -->
+<h2>My Orders</h2>
+<app-loading-spinner *ngIf="loading"></app-loading-spinner>
+<app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+<table *ngIf="!loading && orders.length" class="order-table">
+  <tr><th>Order #</th><th>Date</th><th>Total</th><th>Status</th></tr>
+  <tr *ngFor="let order of orders" (click)="viewOrder(order)" class="clickable">
+    <td>{{ order.id }}</td>
+    <td>{{ order.orderDate | date:'short' }}</td>
+    <td>{{ order.totalPrice | money }}</td>
+    <td>{{ order.status }}</td>
+  </tr>
+</table>
+<p *ngIf="!loading && !orders.length">You have not placed any orders yet.</p>

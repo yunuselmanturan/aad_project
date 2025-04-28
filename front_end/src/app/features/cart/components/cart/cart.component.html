@@ -1,1 +1,25 @@
-<p>cart works!</p>
+<!-- features/cart/components/cart/cart.component.html -->
+<h2>Your Cart</h2>
+<div *ngIf="cartItems.length; else emptyCart">
+  <div class="cart-list">
+    <div class="cart-item" *ngFor="let item of cartItems">
+      <div class="prod-info">
+        <strong>{{ item.product.name }}</strong>
+        <span>{{ item.product.price | money }}</span>
+      </div>
+      <div class="qty-control">
+        <input type="number" [value]="item.quantity" (change)="updateQuantity(item, $any($event.target).value)" min="1">
+      </div>
+      <div class="remove">
+        <button (click)="removeItem(item)">Remove</button>
+      </div>
+    </div>
+  </div>
+  <div class="cart-summary">
+    <p>Total: <strong>{{ totalPrice | money }}</strong></p>
+    <button (click)="proceedToCheckout()">Checkout</button>
+  </div>
+</div>
+<ng-template #emptyCart>
+  <p>Your cart is empty. <a routerLink="/catalogue">Continue shopping</a>.</p>
+</ng-template>

@@ -1,1 +1,25 @@
-<p>compare-dialog works!</p>
+<!-- features/catalogue/components/compare-dialog/compare-dialog.component.html -->
+<h2>Compare Products</h2>
+<div class="compare-table">
+  <div class="header">
+    <div></div>
+    <div>{{ productA.name }}</div>
+    <div>{{ productB.name }}</div>
+  </div>
+  <div class="row">
+    <div>Price</div>
+    <div>{{ productA.price | money }}</div>
+    <div>{{ productB.price | money }}</div>
+  </div>
+  <div class="row">
+    <div>Category</div>
+    <div>{{ productA.category }}</div>
+    <div>{{ productB.category }}</div>
+  </div>
+  <div class="row">
+    <div>Description</div>
+    <div>{{ productA.description }}</div>
+    <div>{{ productB.description }}</div>
+  </div>
+  <!-- More attributes as needed -->
+</div>

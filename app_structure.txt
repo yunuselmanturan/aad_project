@@ -1,9 +1,9 @@
 src/
 └─ app/
    ├─ app.module.ts
-   ├─ app-routing.module.ts
+   ├─ app-routing.module.ts              (root application routes)
    │
-   ├─ core/                              (app‑wide primitives, eagerly loaded)
+   ├─ core/                              (app-wide singletons, imported once in app.module)
    │   ├─ core.module.ts
    │   ├─ header/
    │   │   └─ header.component.{ts,html,scss}
@@ -26,95 +26,136 @@ src/
    │       ├─ notification.service.ts
    │       └─ loader.service.ts
    │
-   ├─ shared/                            (re‑usable ui helpers, pipes, etc.)
+   ├─ shared/                            (reusable components, directives, pipes)
    │   ├─ shared.module.ts
    │   ├─ components/
    │   │   ├─ confirm-dialog/
    │   │   │   └─ confirm-dialog.component.{ts,html,scss}
-   │   │   └─ loading-spinner/
-   │   │       └─ loading-spinner.component.{ts,html,scss}
+   │   │   ├─ loading-spinner/
+   │   │   │   └─ loading-spinner.component.{ts,html,scss}
+   │   │   └─ error-alert/
+   │   │       └─ error-alert.component.{ts,html,scss}
    │   └─ pipes/
    │       └─ money.pipe.ts
    │
-   ├─ features/
-   │   ├─ catalogue/
+   ├─ features/                          (feature modules, many are lazily loaded)
+   │   ├─ catalogue/                     (product browsing, searching, comparisons, reviews)
    │   │   ├─ catalogue.module.ts
+   │   │   ├─ catalogue-routing.module.ts
    │   │   ├─ components/
    │   │   │   ├─ product-list/
-   │   │   │   ├─ product-detail/
+   │   │   │   │   ├─ product-list.component.{ts,html,scss}
+   │   │   │   │   └─ product-list.component.spec.ts
    │   │   │   ├─ product-card/
+   │   │   │   │   └─ product-card.component.{ts,html,scss}
+   │   │   │   ├─ product-detail/
+   │   │   │   │   ├─ product-detail.component.{ts,html,scss}
+   │   │   │   │   └─ product-detail.component.spec.ts
    │   │   │   ├─ product-filter/
+   │   │   │   │   └─ product-filter.component.{ts,html,scss}
    │   │   │   ├─ compare-dialog/
+   │   │   │   │   └─ compare-dialog.component.{ts,html,scss}
    │   │   │   ├─ review-list/
+   │   │   │   │   └─ review-list.component.{ts,html,scss}
    │   │   │   └─ review-form/
+   │   │   │       └─ review-form.component.{ts,html,scss}
    │   │   └─ services/
    │   │       ├─ product.service.ts
    │   │       └─ review.service.ts
    │   │
-   │   ├─ cart/
+   │   ├─ cart/                          (shopping cart)
    │   │   ├─ cart.module.ts
    │   │   ├─ components/
    │   │   │   ├─ cart/
+   │   │   │   │   └─ cart.component.{ts,html,scss}
    │   │   │   └─ cart-item/
+   │   │   │       └─ cart-item.component.{ts,html,scss}
    │   │   └─ services/
    │   │       └─ cart.service.ts
    │   │
-   │   ├─ checkout/
+   │   ├─ checkout/                      (checkout process, payment, order confirmation)
    │   │   ├─ checkout.module.ts
+   │   │   ├─ checkout-routing.module.ts
    │   │   ├─ components/
    │   │   │   ├─ checkout/
+   │   │   │   │   └─ checkout.component.{ts,html,scss}
    │   │   │   ├─ payment/
+   │   │   │   │   └─ payment.component.{ts,html,scss}
    │   │   │   └─ order-success/
+   │   │   │       └─ order-success.component.{ts,html,scss}
    │   │   └─ services/
    │   │       ├─ payment.service.ts
    │   │       └─ order.service.ts
    │   │
-   │   ├─ orders/
+   │   ├─ orders/                        (user order history & tracking)
    │   │   ├─ orders.module.ts
+   │   │   ├─ orders-routing.module.ts
    │   │   ├─ components/
    │   │   │   ├─ order-history/
+   │   │   │   │   └─ order-history.component.{ts,html,scss}
    │   │   │   └─ order-detail/
+   │   │   │       └─ order-detail.component.{ts,html,scss}
    │   │   └─ services/
-   │   │       └─ order.service.ts       (re‑export from checkout)
+   │   │       └─ order.service.ts       (re-used from checkout module or provided in root)
    │   │
-   │   ├─ auth/
+   │   ├─ auth/                          (authentication and user profile)
    │   │   ├─ auth.module.ts
-   │   │   └─ components/
-   │   │       ├─ login/
-   │   │       ├─ register/
-   │   │       └─ user-profile/
+   │   │   ├─ auth-routing.module.ts
+   │   │   ├─ components/
+   │   │   │   ├─ login/
+   │   │   │   │   └─ login.component.{ts,html,scss}
+   │   │   │   ├─ register/
+   │   │   │   │   └─ register.component.{ts,html,scss}
+   │   │   │   └─ user-profile/
+   │   │   │       └─ user-profile.component.{ts,html,scss}
+   │   │   └─ services/                  (if any auth-specific services, usually none needed here)
+   │   │       └─ (AuthService is globally in core)
    │   │
-   │   ├─ seller-dashboard/              (lazy feature for each SELLER_ADMIN)
+   │   ├─ seller-dashboard/              (lazy-loaded feature module for SELLER role)
    │   │   ├─ seller-dashboard.module.ts
+   │   │   ├─ seller-dashboard-routing.module.ts
    │   │   ├─ components/
    │   │   │   ├─ dashboard/
+   │   │   │   │   └─ dashboard.component.{ts,html,scss}        (seller’s sales stats overview)
    │   │   │   ├─ products/
    │   │   │   │   ├─ seller-product-list/
+   │   │   │   │   │   └─ seller-product-list.component.{ts,html,scss}
    │   │   │   │   └─ seller-product-form/
+   │   │   │   │       └─ seller-product-form.component.{ts,html,scss}
    │   │   │   ├─ orders/
    │   │   │   │   └─ seller-order-list/
+   │   │   │   │       └─ seller-order-list.component.{ts,html,scss}
    │   │   │   └─ shipments/
    │   │   │       └─ shipment-tracking/
+   │   │   │           └─ shipment-tracking.component.{ts,html,scss}
    │   │   └─ services/
-   │   │       ├─ seller-product.service.ts
-   │   │       └─ seller-order.service.ts
+   │   │       └─ seller.service.ts
+   │   │         (methods for managing seller’s products, orders, and fetching seller-specific analytics)
    │   │
-   │   └─ system-admin/                  (lazy feature for SYSTEM_ADMIN)
+   │   └─ system-admin/                  (lazy-loaded feature module for ADMIN role)
    │       ├─ system-admin.module.ts
+   │       ├─ system-admin-routing.module.ts
    │       ├─ components/
    │       │   ├─ dashboard/
+   │       │   │   └─ dashboard.component.{ts,html,scss}        (platform-wide analytics graphs)
    │       │   ├─ sellers/
    │       │   │   ├─ seller-list/
+   │       │   │   │   └─ seller-list.component.{ts,html,scss}
    │       │   │   └─ seller-form/
+   │       │   │       └─ seller-form.component.{ts,html,scss}
    │       │   ├─ users/
    │       │   │   └─ user-list/
+   │       │   │       └─ user-list.component.{ts,html,scss}
    │       │   ├─ global-orders/
    │       │   │   └─ global-order-list/
+   │       │   │       └─ global-order-list.component.{ts,html,scss}
    │       │   └─ payments/
    │       │       └─ payment-issues/
+   │       │           └─ payment-issues.component.{ts,html,scss}
    │       └─ services/
-   │           └─ system-admin.service.ts
+   │           └─ admin.service.ts
+   │             (methods for admin tasks: managing users, sellers, orders, payment issues, analytics)
    │
-   └─ environments/
-       ├─ environment.ts
-       └─ environment.prod.ts
+   └─ environments/                      (environment configuration for API endpoints, etc.)
+       ├─ environment.ts                 (e.g., apiUrl for dev)
+       └─ environment.prod.ts            (apiUrl for production)

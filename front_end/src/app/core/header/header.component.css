@@ -1,0 +1,10 @@
+/* core/header/header.component.scss */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  background-color: #1976d2; color: #fff;
+  padding: 0.5rem 1rem; align-items: center;
+}
+.nav-links li { display: inline-block; margin: 0 0.5rem; }
+.nav-links a { color: #fff; text-decoration: none; font-weight: 500; }
+.auth-section button, .auth-section a { margin-left: 1rem; color: #fff; }

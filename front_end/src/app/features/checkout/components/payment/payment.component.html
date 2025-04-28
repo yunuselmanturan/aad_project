@@ -1,1 +1,23 @@
-<p>payment works!</p>
+<!-- features/checkout/components/payment/payment.component.html -->
+<h2>Payment</h2>
+<div *ngIf="orderId; else noOrder">
+  <p>Complete payment for Order #{{ orderId }}</p>
+  <!-- Simplified payment form -->
+  <div>
+    <label>Card Number</label>
+    <input type="text" [(ngModel)]="paymentInfo.cardNumber" placeholder="1234 5678 9012 3456" />
+  </div>
+  <div>
+    <label>Expiry</label>
+    <input type="text" [(ngModel)]="paymentInfo.expiry" placeholder="MM/YY" />
+  </div>
+  <div>
+    <label>CVV</label>
+    <input type="text" [(ngModel)]="paymentInfo.cvv" placeholder="123" />
+  </div>
+  <button (click)="pay()" [disabled]="processing">Pay Now</button>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+</div>
+<ng-template #noOrder>
+  <p>No pending payment. <a routerLink="/">Go to home</a></p>
+</ng-template>

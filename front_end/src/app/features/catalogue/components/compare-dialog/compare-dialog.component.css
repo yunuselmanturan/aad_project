@@ -1,0 +1,11 @@
+/* features/catalogue/components/compare-dialog/compare-dialog.component.scss */
+.compare-table {
+  display: table; width: 100%;
+}
+.header, .row {
+  display: table-row;
+}
+.header div, .row div {
+  display: table-cell; padding: 0.5rem; vertical-align: top;
+}
+.header div { font-weight: bold; background: #f0f0f0; }

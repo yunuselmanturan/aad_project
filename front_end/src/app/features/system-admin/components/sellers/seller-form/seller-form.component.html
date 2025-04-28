@@ -1,1 +1,20 @@
-<p>seller-form works!</p>
+<!-- features/system-admin/components/sellers/seller-form/seller-form.component.html -->
+<h2>{{ editing ? 'Edit Seller' : 'New Seller' }}</h2>
+<form [formGroup]="sellerForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label>Name:</label>
+    <input formControlName="name" type="text" />
+    <div class="error" *ngIf="sellerForm.get('name')?.touched && sellerForm.get('name')?.invalid">Name is required.</div>
+  </div>
+  <div>
+    <label>Email:</label>
+    <input formControlName="email" type="email" />
+    <div class="error" *ngIf="sellerForm.get('email')?.touched && sellerForm.get('email')?.invalid">Valid email is required.</div>
+  </div>
+  <div>
+    <label>Active:</label>
+    <input formControlName="active" type="checkbox" />
+  </div>
+  <button type="submit" [disabled]="loading">{{ editing ? 'Save' : 'Create' }}</button>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+</form>

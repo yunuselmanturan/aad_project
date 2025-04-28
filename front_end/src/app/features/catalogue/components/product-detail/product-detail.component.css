@@ -1,0 +1,8 @@
+/* features/catalogue/components/product-detail/product-detail.component.scss */
+.product-details {
+  display: flex; gap: 2rem; margin-bottom: 2rem;
+}
+.product-details img { max-width: 300px; }
+.product-details .info { max-width: 600px; }
+.product-details .price { font-weight: bold; font-size: 1.5rem; margin: 0.5rem 0; }
+.reviews-section { margin-top: 2rem; }
