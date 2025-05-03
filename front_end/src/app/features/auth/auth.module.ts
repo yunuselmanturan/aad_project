@@ -8,9 +8,15 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { UserProfileComponent } from './components/user-profile/user-profile.component';
+import { SellerRegisterComponent } from './components/seller-register/seller-register.component';
 
 @NgModule({
-  declarations: [LoginComponent, RegisterComponent, UserProfileComponent],
+  declarations: [
+    LoginComponent,
+    RegisterComponent,
+    UserProfileComponent,
+    SellerRegisterComponent
+  ],
   imports: [ CommonModule, ReactiveFormsModule, SharedModule, AuthRoutingModule ]
 })
 export class AuthModule { }

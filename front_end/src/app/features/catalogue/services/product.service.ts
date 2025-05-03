@@ -2,16 +2,26 @@ import { environment } from './../../../../environments/environment.development'
 // features/catalogue/services/product.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 export interface Product {
   id: number;
   name: string;
   description: string;
   price: number;
-  category: string;
-  imageUrl?: string;
-  // other fields: e.g., stock, specs, etc.
+  stockQuantity: number;
+  storeId: number;
+  categoryId: number;
+  storeName?: string;
+  categoryName?: string;
+  imageUrls?: string[];
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -20,20 +30,22 @@ export class ProductService {
   constructor(private http: HttpClient) {}
 
   getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}/products`);
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/products`)
+      .pipe(map(response => response.data));
   }
 
   getProductById(productId: number): Observable<Product> {
-    return this.http.get<Product>(`${this.apiUrl}/products/${productId}`);
+    return this.http.get<ApiResponse<Product>>(`${this.apiUrl}/products/${productId}`)
+      .pipe(map(response => response.data));
   }
 
   searchProducts(keyword: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}/products`, { params: { search: keyword } });
-    // Assuming backend handles query param 'search' to filter products by name/description
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/products/search`, { params: { keyword } })
+      .pipe(map(response => response.data));
   }
 
-  getProductsByCategory(category: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}/products`, { params: { category: category } });
-    // Assuming endpoint can filter by category via query param
+  getProductsByCategory(categoryId: number): Observable<Product[]> {
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/products/category/${categoryId}`)
+      .pipe(map(response => response.data));
   }
 }

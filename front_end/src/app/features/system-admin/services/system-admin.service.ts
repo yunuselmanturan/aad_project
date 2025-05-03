@@ -60,4 +60,13 @@ export class AdminService {
   resolvePaymentIssue(orderId: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/admin/payment-issues/${orderId}/resolve`, {});
   }
+
+  // Product management
+  getAllProducts(): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.apiUrl}/admin/products`);
+  }
+
+  removeProduct(productId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/admin/products/${productId}`);
+  }
 }

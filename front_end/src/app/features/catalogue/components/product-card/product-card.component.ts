@@ -10,6 +10,7 @@ import { Product } from '../../services/product.service';
 })
 export class ProductCardComponent {
   @Input() product!: Product;
+  @Input() isSelected: boolean = false;
   @Output() addToCart = new EventEmitter<Product>();
   @Output() compare = new EventEmitter<Product>();
 

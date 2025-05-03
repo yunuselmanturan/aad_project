@@ -23,6 +23,7 @@ export class ProductListComponent implements OnInit {
 
   // For product comparison feature:
   compareSelection: Product[] = [];
+  maxCompareProducts: number = 4; // Allow comparing up to 4 products
 
   constructor(private productService: ProductService, private dialog: MatDialog,private categoryService: CategoryService,
     private cartService: CartService,
@@ -34,6 +35,8 @@ export class ProductListComponent implements OnInit {
       this.products = products;
       this.applyFilters();
     });
+
+    this.getCategories();
   }
 
   onSearch(term: string): void {
@@ -55,7 +58,8 @@ export class ProductListComponent implements OnInit {
         p.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         p.description.toLowerCase().includes(this.searchTerm.toLowerCase())
         : true;
-      const matchesCategory = this.categoryFilter ? p.category === this.categoryFilter : true;
+      const matchesCategory = this.categoryFilter ?
+        p.categoryId.toString() === this.categoryFilter : true;
       return matchesText && matchesCategory;
     });
   }
@@ -67,20 +71,32 @@ export class ProductListComponent implements OnInit {
       // already in list, remove it
       this.compareSelection.splice(index, 1);
     } else {
-      if (this.compareSelection.length < 2) {
+      if (this.compareSelection.length < this.maxCompareProducts) {
         this.compareSelection.push(product);
       } else {
-        // replace the first one if already two selected (or notify user)
-        this.compareSelection[0] = product;
+        this.notificationService.showError(`You can compare up to ${this.maxCompareProducts} products at once.`);
       }
     }
   }
 
+  isProductInCompare(product: Product): boolean {
+    return this.compareSelection.some(p => p.id === product.id);
+  }
+
+  clearCompareSelection(): void {
+    this.compareSelection = [];
+  }
+
   openCompareDialog(): void {
-    if (this.compareSelection.length < 2) return;
+    if (this.compareSelection.length < 2) {
+      this.notificationService.showError('Select at least 2 products to compare.');
+      return;
+    }
+
     this.dialog.open(CompareDialogComponent, {
-      data: { productA: this.compareSelection[0], productB: this.compareSelection[1] },
-      width: '600px'
+      data: { products: this.compareSelection },
+      width: '90%',
+      maxWidth: '1200px'
     });
   }
 
@@ -107,3 +123,4 @@ export class ProductListComponent implements OnInit {
     this.notificationService.showSuccess('Product added to cart!');
   }
 }
+

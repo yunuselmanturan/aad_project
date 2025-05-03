@@ -6,10 +6,22 @@ import { Observable } from 'rxjs';
 import { Product } from '../../catalogue/services/product.service';
 import { Order } from '../../checkout/services/order.service';
 
+export interface Store {
+  id: number;
+  name: string;
+  description: string;
+  sellerId: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SellerService {
   private apiUrl = environment.apiUrl;
   constructor(private http: HttpClient) {}
+
+  // Store management
+  getSellerStores(): Observable<Store[]> {
+    return this.http.get<Store[]>(`${this.apiUrl}/seller/stores`);
+  }
 
   // Products management
   getSellerProducts(): Observable<Product[]> {

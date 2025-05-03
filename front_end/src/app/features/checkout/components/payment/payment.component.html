@@ -1,23 +1,166 @@
 <!-- features/checkout/components/payment/payment.component.html -->
-<h2>Payment</h2>
-<div *ngIf="orderId; else noOrder">
-  <p>Complete payment for Order #{{ orderId }}</p>
-  <!-- Simplified payment form -->
-  <div>
-    <label>Card Number</label>
-    <input type="text" [(ngModel)]="paymentInfo.cardNumber" placeholder="1234 5678 9012 3456" />
+<div class="container mt-4" *ngIf="orderId; else noOrder">
+  <h2>Payment</h2>
+
+  <div class="alert alert-info" *ngIf="!isLoggedIn">
+    <p>You're currently checking out as a guest. <a routerLink="/auth/login" [queryParams]="{returnUrl: '/checkout/payment'}">Log in</a> to use your saved payment methods.</p>
   </div>
-  <div>
-    <label>Expiry</label>
-    <input type="text" [(ngModel)]="paymentInfo.expiry" placeholder="MM/YY" />
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3 class="mb-0">Payment Method</h3>
+        </div>
+        <div class="card-body">
+          <!-- Payment Method Selection for Logged In Users -->
+          <div *ngIf="isLoggedIn">
+            <div class="d-flex justify-content-between mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" id="useExistingPayment"
+                       [checked]="useExistingPayment"
+                       (change)="togglePaymentForm()"
+                       [disabled]="savedPaymentMethods.length === 0">
+                <label class="form-check-label" for="useExistingPayment">
+                  Use a saved payment method
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" id="useNewPayment"
+                       [checked]="!useExistingPayment"
+                       (change)="togglePaymentForm()">
+                <label class="form-check-label" for="useNewPayment">
+                  Use a new payment method
+                </label>
+              </div>
+            </div>
+
+            <!-- Saved Payment Method Selection -->
+            <div *ngIf="useExistingPayment">
+              <form [formGroup]="paymentForm" class="mb-3">
+                <div class="mb-3">
+                  <label for="paymentSelect" class="form-label">Select a payment method</label>
+                  <select id="paymentSelect" formControlName="selectedPaymentId" class="form-select">
+                    <option value="">-- Select Payment Method --</option>
+                    <option *ngFor="let payment of savedPaymentMethods" [value]="payment.id">
+                      {{ maskCardNumber(payment.cardNumber) }} - {{ payment.cardholderName }}
+                    </option>
+                  </select>
+                  <div *ngIf="error && error.includes('method')" class="text-danger">
+                    {{ error }}
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- New Payment Method Form -->
+          <div *ngIf="showPaymentForm">
+            <form [formGroup]="paymentForm">
+              <div formGroupName="newPayment" class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="cardNumber" class="form-label">Card Number</label>
+                  <input id="cardNumber" formControlName="cardNumber" type="text" class="form-control" placeholder="1234567890123456">
+                  <div *ngIf="paymentForm.get('newPayment.cardNumber')?.invalid && paymentForm.get('newPayment.cardNumber')?.touched" class="text-danger">
+                    Please enter a valid 16-digit card number.
+                  </div>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                  <label for="cardholderName" class="form-label">Cardholder Name</label>
+                  <input id="cardholderName" formControlName="cardholderName" type="text" class="form-control">
+                  <div *ngIf="paymentForm.get('newPayment.cardholderName')?.invalid && paymentForm.get('newPayment.cardholderName')?.touched" class="text-danger">
+                    Cardholder name is required.
+                  </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="expiryMonth" class="form-label">Expiry Month</label>
+                  <select id="expiryMonth" formControlName="expiryMonth" class="form-select">
+                    <option value="">Month</option>
+                    <option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="month">{{ month }}</option>
+                  </select>
+                  <div *ngIf="paymentForm.get('newPayment.expiryMonth')?.invalid && paymentForm.get('newPayment.expiryMonth')?.touched" class="text-danger">
+                    Required.
+                  </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="expiryYear" class="form-label">Expiry Year</label>
+                  <select id="expiryYear" formControlName="expiryYear" class="form-select">
+                    <option value="">Year</option>
+                    <option *ngFor="let year of [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030]" [value]="year">{{ year }}</option>
+                  </select>
+                  <div *ngIf="paymentForm.get('newPayment.expiryYear')?.invalid && paymentForm.get('newPayment.expiryYear')?.touched" class="text-danger">
+                    Required.
+                  </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="cvv" class="form-label">CVV</label>
+                  <input id="cvv" formControlName="cvv" type="text" class="form-control" placeholder="123">
+                  <div *ngIf="paymentForm.get('newPayment.cvv')?.invalid && paymentForm.get('newPayment.cvv')?.touched" class="text-danger">
+                    3-4 digits required.
+                  </div>
+                </div>
+
+                <!-- Option to save this payment method (only for logged in users) -->
+                <div class="col-md-12 mb-3" *ngIf="isLoggedIn">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="savePayment" formControlName="savePayment">
+                    <label class="form-check-label" for="savePayment">
+                      Save this payment method for future orders
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Order Summary</h3>
+        </div>
+        <div class="card-body">
+          <div *ngIf="orderDetails; else loadingOrder">
+            <p class="mb-1">Order #{{ orderId }}</p>
+            <p class="mb-3">Total: <strong>{{ getOrderTotal() | currency }}</strong></p>
+
+            <button
+              (click)="pay()"
+              class="btn btn-primary w-100"
+              [disabled]="processing">
+              <span *ngIf="processing" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {{ processing ? 'Processing...' : 'Complete Payment' }}
+            </button>
+
+            <div *ngIf="error && !error.includes('method')" class="alert alert-danger mt-3">
+              {{ error }}
+            </div>
+          </div>
+
+          <ng-template #loadingOrder>
+            <div class="text-center py-4">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading order details...</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
   </div>
-  <div>
-    <label>CVV</label>
-    <input type="text" [(ngModel)]="paymentInfo.cvv" placeholder="123" />
-  </div>
-  <button (click)="pay()" [disabled]="processing">Pay Now</button>
-  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
 </div>
+
 <ng-template #noOrder>
-  <p>No pending payment. <a routerLink="/">Go to home</a></p>
+  <div class="container mt-4">
+    <div class="alert alert-warning">
+      <p>No pending payment found. <a routerLink="/cart">Return to your cart</a></p>
+    </div>
+  </div>
 </ng-template>

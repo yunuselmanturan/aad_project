@@ -1,10 +1,11 @@
-import { environment } from './../../../environments/environment.development';
+import { environment } from './../../../environments/environment';
 // core/services/auth.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { TokenStorageService } from './token-storage.service';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
   id: number;
@@ -14,41 +15,65 @@ export interface User {
   // other user fields as needed
 }
 
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   public currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private isBrowser: boolean;
 
   private apiUrl = environment.apiUrl;  // e.g. "http://localhost:8080/api"
 
-  constructor(private http: HttpClient, public tokenStorage: TokenStorageService, private router: Router) {
+  constructor(
+    private http: HttpClient,
+    public tokenStorage: TokenStorageService,
+    private router: Router,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+
     // On service init, load token from storage and attempt to parse user if available
-    const savedUser = this.tokenStorage.getUser();
-    if (savedUser) {
-      this.currentUserSubject.next(savedUser);
+    if (this.isBrowser) {
+      const savedUser = this.tokenStorage.getUser();
+      if (savedUser) {
+        this.currentUserSubject.next(savedUser);
+      }
     }
   }
 
   login(email: string, password: string): Observable<any> {
     const loginData = { email, password };
-    // Assume backend returns { token: 'jwt-token', user: { ... } }
+    // Use fixed URL to avoid any path issues
     return new Observable(observer => {
-      this.http.post<any>(`${this.apiUrl}/auth/login`, loginData).subscribe({
+      this.http.post<ApiResponse<any>>('http://localhost:8080/api/auth/login', loginData).subscribe({
         next: response => {
+          if (!response.success) {
+            observer.error(response.message);
+            return;
+          }
+
+          const data = response.data;
           // Save token and user info
-          if (response.token) {
-            this.tokenStorage.saveToken(response.token);
+          if (data.token) {
+            this.tokenStorage.saveToken(data.token);
           }
           // If backend returns user details with roles
-          if (response.user) {
-            this.tokenStorage.saveUser(response.user);
-            this.currentUserSubject.next(response.user);
+          if (data.user) {
+            this.tokenStorage.saveUser(data.user);
+            this.currentUserSubject.next(data.user);
           } else {
             // If user info not returned, decode token to get roles (or call another endpoint to get profile)
-            const user = this.decodeToken(response.token);
+            const user = this.decodeToken(data.token);
             this.tokenStorage.saveUser(user);
             this.currentUserSubject.next(user);
           }
+
           observer.next(true);
           observer.complete();
         },
@@ -60,7 +85,8 @@ export class AuthService {
   }
 
   register(userData: { name: string; email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/register`, userData);
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/auth/register`, userData)
+      .pipe(map(response => response.data));
   }
 
   logout(): void {
@@ -74,7 +100,16 @@ export class AuthService {
   private decodeToken(token: string): User {
     // Basic JWT decode without external library:
     try {
-      const payload = JSON.parse(atob(token.split('.')[1])); // decode payload part
+      let payload;
+      if (this.isBrowser) {
+        payload = JSON.parse(atob(token.split('.')[1])); // decode payload part in browser
+      } else {
+        // Use Buffer for Node.js environment (SSR)
+        const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+        payload = JSON.parse(jsonPayload);
+      }
+
       const user: User = {
         id: payload.id,
         email: payload.sub || payload.email,

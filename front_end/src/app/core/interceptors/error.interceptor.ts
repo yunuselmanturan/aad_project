@@ -14,9 +14,21 @@ export class ErrorInterceptor implements HttpInterceptor {
               private notify: NotificationService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Log outgoing request URL for debugging
+    console.log(`API Request to: ${req.url}`);
+
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         let errorMsg = '';
+
+        // Log detailed error information for debugging
+        console.error('API Error:', {
+          url: req.url,
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error
+        });
+
         if (error.status === 401) {
           // Unauthorized – maybe token expired or not valid
           this.authService.logout();

@@ -1,11 +1,38 @@
 /* features/catalogue/components/compare-dialog/compare-dialog.component.scss */
 .compare-table {
-  display: table; width: 100%;
+  display: grid;
+  grid-template-columns: 150px repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 10px;
+  margin: 20px 0;
+  max-width: 100%;
+  overflow-x: auto;
 }
+
 .header, .row {
-  display: table-row;
+  display: contents;
 }
-.header div, .row div {
-  display: table-cell; padding: 0.5rem; vertical-align: top;
+
+.attribute-label {
+  font-weight: bold;
+  background-color: #f5f5f5;
+  padding: 10px;
 }
-.header div { font-weight: bold; background: #f0f0f0; }
+
+.product-column {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.product-image {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: contain;
+  margin: 10px auto;
+  display: block;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

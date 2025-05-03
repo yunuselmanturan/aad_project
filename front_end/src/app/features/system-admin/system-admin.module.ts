@@ -11,6 +11,7 @@ import { SellerFormComponent } from './components/sellers/seller-form/seller-for
 import { UserListComponent } from './components/users/user-list/user-list.component';
 import { GlobalOrderListComponent } from './components/global-orders/global-order-list/global-order-list.component';
 import { PaymentIssuesComponent } from './components/payments/payment-issues/payment-issues.component';
+import { ProductManagementComponent } from './components/products/product-management/product-management.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { PaymentIssuesComponent } from './components/payments/payment-issues/pay
     SellerFormComponent,
     UserListComponent,
     GlobalOrderListComponent,
-    PaymentIssuesComponent
+    PaymentIssuesComponent,
+    ProductManagementComponent
   ],
   imports: [ CommonModule, ReactiveFormsModule, SharedModule, SystemAdminRoutingModule ]
 })

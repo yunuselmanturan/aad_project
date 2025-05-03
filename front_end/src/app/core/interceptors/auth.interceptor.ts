@@ -1,4 +1,4 @@
-import { environment } from './../../../environments/environment.development';
+import { environment } from './../../../environments/environment';
 // core/interceptors/auth.interceptor.ts
 import { Injectable } from '@angular/core';
 import { HttpInterceptor, HttpHandler, HttpRequest, HttpEvent } from '@angular/common/http';

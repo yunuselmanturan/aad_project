@@ -10,10 +10,34 @@ import { Product } from '../../services/product.service';
   styleUrls: ['./compare-dialog.component.css']
 })
 export class CompareDialogComponent {
-  productA: Product;
-  productB: Product;
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { productA: Product, productB: Product }) {
-    this.productA = data.productA;
-    this.productB = data.productB;
+  products: Product[] = [];
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { products: Product[] }) {
+    this.products = data.products;
+  }
+
+  // Get comparison attributes for the product table
+  getComparisonAttributes(): string[] {
+    return ['price', 'categoryId', 'stockQuantity', 'description'];
+  }
+
+  // Get attribute label for display
+  getAttributeLabel(attr: string): string {
+    const labels: {[key: string]: string} = {
+      'price': 'Price',
+      'categoryId': 'Category',
+      'stockQuantity': 'Stock',
+      'description': 'Description'
+    };
+    return labels[attr] || attr;
+  }
+
+  // Format attribute value for display
+  getAttributeValue(product: Product, attr: string): string {
+    const value = (product as any)[attr];
+    if (attr === 'price') {
+      return '$' + value.toFixed(2);
+    }
+    return value?.toString() || 'N/A';
   }
 }
