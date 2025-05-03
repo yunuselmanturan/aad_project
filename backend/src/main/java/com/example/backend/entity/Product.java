@@ -13,25 +13,27 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JoinColumn(name = "store_id", referencedColumnName = "store_id")
     private Store store;
 
     @ManyToOne
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "seller_id", referencedColumnName = "user_id")
+    private User seller;  // New field linking Product to User with role SELLER
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", referencedColumnName = "category_id")
     private Category category;
 
     private String name;
-
-    @Column(columnDefinition = "TEXT")
     private String description;
-
     private BigDecimal price;
 
     @Column(name = "stock_quantity")
@@ -40,12 +42,13 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
-    public Product(Store store, Category category, String name, String description, BigDecimal price, int stockQuantity) {
+    public Product(Store store, User seller, Category category, String name, String description, BigDecimal price, int stockQuantity) {
         this.store = store;
+        this.seller = seller;
         this.category = category;
         this.name = name;
         this.description = description;
         this.price = price;
         this.stockQuantity = stockQuantity;
     }
-} 
+}

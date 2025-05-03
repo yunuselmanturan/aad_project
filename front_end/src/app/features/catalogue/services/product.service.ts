@@ -15,6 +15,8 @@ export interface Product {
   storeName?: string;
   categoryName?: string;
   imageUrls?: string[];
+  sellerId?: number;    // New field for seller
+  sellerName?: string;  // New field for seller's name
 }
 
 export interface ApiResponse<T> {

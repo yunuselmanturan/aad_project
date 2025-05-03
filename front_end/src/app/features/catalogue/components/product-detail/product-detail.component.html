@@ -1,11 +1,13 @@
 <!-- features/catalogue/components/product-detail/product-detail.component.html -->
 <div *ngIf="product; else loadingOrError">
   <div class="product-details">
-    <img [src]="product.imageUrl || '/assets/placeholder.png'" alt="{{ product.name }}">
+    <img [src]="product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/assets/placeholder.png'"
+         alt="{{ product.name }}">
     <div class="info">
       <h2>{{ product.name }}</h2>
       <p class="price">{{ product.price | money }}</p>
       <p class="desc">{{ product.description }}</p>
+      <p class="seller">Sold by: {{ product.sellerName }}</p>
       <button (click)="addToCart(product)">Add to Cart</button>
     </div>
   </div>

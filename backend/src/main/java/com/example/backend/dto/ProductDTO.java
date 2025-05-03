@@ -22,4 +22,7 @@ public class ProductDTO {
     private String storeName;
     private String categoryName;
     private List<String> imageUrls;
-} 
+
+    private Long sellerId;    // New field for seller
+    private String sellerName; // New field for seller's name
+}

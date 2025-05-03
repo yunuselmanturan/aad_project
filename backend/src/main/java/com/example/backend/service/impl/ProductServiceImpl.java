@@ -17,6 +17,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -281,71 +284,135 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO createSellerProduct(ProductDTO productDTO, Authentication authentication) {
         User seller = (User) authentication.getPrincipal();
-        
-        // Verify the seller owns the store
+
         Store store = storeRepository.findById(productDTO.getStoreId())
                 .orElseThrow(() -> new ResourceNotFoundException("Store not found with id: " + productDTO.getStoreId()));
-        
+
         if (!store.getSeller().getId().equals(seller.getId())) {
             throw new AccessDeniedException("You can only add products to your own stores");
         }
-        
-        // Use the existing create method
-        return create(productDTO);
+
+        // Create new product with seller
+        Product product = new Product();
+        product.setName(productDTO.getName());
+        product.setDescription(productDTO.getDescription());
+        product.setPrice(productDTO.getPrice());
+        product.setStockQuantity(productDTO.getStockQuantity());
+        product.setStore(store);
+        product.setSeller(seller);
+
+        if (productDTO.getCategoryId() != null) {
+            Category category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + productDTO.getCategoryId()));
+            product.setCategory(category);
+        }
+
+        Product savedProduct = productRepository.save(product);
+
+        // Save product images if provided
+        if (productDTO.getImageUrls() != null) {
+            List<ProductImage> images = new ArrayList<>();
+            for (int i = 0; i < productDTO.getImageUrls().size(); i++) {
+                ProductImage image = new ProductImage();
+                image.setProduct(savedProduct);
+                image.setImageUrl(productDTO.getImageUrls().get(i));
+                image.setPrimaryImage(i == 0);
+                images.add(productImageRepository.save(image));
+            }
+            savedProduct.setImages(images);
+        }
+
+        return mapProductToDTO(savedProduct);
     }
     
     @Override
     @Transactional
     public ProductDTO updateSellerProduct(Long id, ProductDTO productDTO, Authentication authentication) {
         User seller = (User) authentication.getPrincipal();
-        
-        // Verify the seller owns the product
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        
-        if (!product.getStore().getSeller().getId().equals(seller.getId())) {
+
+        if (!product.getSeller().getId().equals(seller.getId())) {
             throw new AccessDeniedException("You can only update your own products");
         }
-        
-        // Use the existing update method
-        return update(id, productDTO);
+
+        // Update fields
+        product.setName(productDTO.getName());
+        product.setDescription(productDTO.getDescription());
+        product.setPrice(productDTO.getPrice());
+        product.setStockQuantity(productDTO.getStockQuantity());
+
+        if (productDTO.getCategoryId() != null) {
+            Category category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + productDTO.getCategoryId()));
+            product.setCategory(category);
+        }
+
+        Product savedProduct = productRepository.save(product);
+
+        // Update images if provided (similar logic)
+        if (productDTO.getImageUrls() != null) {
+            // Remove old images
+            if (savedProduct.getImages() != null) {
+                productImageRepository.deleteAll(savedProduct.getImages());
+            }
+            List<ProductImage> images = new ArrayList<>();
+            for (int i = 0; i < productDTO.getImageUrls().size(); i++) {
+                ProductImage image = new ProductImage();
+                image.setProduct(savedProduct);
+                image.setImageUrl(productDTO.getImageUrls().get(i));
+                image.setPrimaryImage(i == 0);
+                images.add(productImageRepository.save(image));
+            }
+            savedProduct.setImages(images);
+        }
+
+        return mapProductToDTO(savedProduct);
     }
     
     @Override
     @Transactional
     public void deleteSellerProduct(Long id, Authentication authentication) {
         User seller = (User) authentication.getPrincipal();
-        
-        // Verify the seller owns the product
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        
-        if (!product.getStore().getSeller().getId().equals(seller.getId())) {
+
+        if (!product.getSeller().getId().equals(seller.getId())) {
             throw new AccessDeniedException("You can only delete your own products");
         }
-        
-        // Use the existing delete method
-        delete(id);
+
+        // Delete images and product
+        if (product.getImages() != null) {
+            productImageRepository.deleteAll(product.getImages());
+        }
+        productRepository.delete(product);
     }
     
     private ProductDTO mapProductToDTO(Product product) {
         ProductDTO productDTO = new ProductDTO();
+        // set existing fields
         productDTO.setId(product.getId());
         productDTO.setName(product.getName());
         productDTO.setDescription(product.getDescription());
         productDTO.setPrice(product.getPrice());
         productDTO.setStockQuantity(product.getStockQuantity());
-        
+
         if (product.getStore() != null) {
             productDTO.setStoreId(product.getStore().getId());
             productDTO.setStoreName(product.getStore().getStoreName());
         }
-        
+
         if (product.getCategory() != null) {
             productDTO.setCategoryId(product.getCategory().getId());
             productDTO.setCategoryName(product.getCategory().getName());
         }
-        
+
+        // Set seller info
+        if (product.getSeller() != null) {
+            productDTO.setSellerId(product.getSeller().getId());
+            productDTO.setSellerName(product.getSeller().getName() + " " + product.getSeller().getSurname());
+        }
+
         // Get image URLs
         List<String> imageUrls = new ArrayList<>();
         if (product.getImages() != null) {
@@ -354,7 +421,7 @@ public class ProductServiceImpl implements ProductService {
                     .collect(Collectors.toList());
         }
         productDTO.setImageUrls(imageUrls);
-        
+
         return productDTO;
     }
 } 
