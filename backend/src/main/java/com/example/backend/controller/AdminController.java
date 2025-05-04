@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.ApiResponse;
+import com.example.backend.dto.IssueDTO;
 import com.example.backend.dto.OrderDTO;
 import com.example.backend.dto.ProductDTO;
 import com.example.backend.dto.TransactionDto;
@@ -8,15 +9,21 @@ import com.example.backend.dto.UserDTO;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.ProductService;
 import com.example.backend.service.TransactionService;
+import com.example.backend.service.IssueService; // Add this import for IssueService
 import com.example.backend.entity.Transaction; // Ensure this is the correct package for the Transaction class
 import com.example.backend.service.UserService;
+
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -31,9 +38,11 @@ public class AdminController {
     
     @Autowired
     private ProductService productService;
-
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private IssueService issueService; 
     
     // User Management
     @GetMapping("/users")
@@ -121,5 +130,71 @@ public class AdminController {
     @GetMapping("/transactions")
     public List<TransactionDto> getAllTransactions() {
         return transactionService.getAllTransactions();
+    }
+
+    @GetMapping("/sellers")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllSellers() {
+        List<UserDTO> sellers = userService.findAll().stream()
+            .filter(u -> "SELLER".equals(u.getRole()))
+            .collect(Collectors.toList());
+        List<Map<String, Object>> result = sellers.stream().map(u -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", u.getId());
+            map.put("name", u.getName());
+            map.put("email", u.getEmail());
+            map.put("roles", Collections.singletonList(u.getRole()));
+            map.put("active", !u.isBanned());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // Create a seller
+    @PostMapping("/sellers")
+    public ResponseEntity<ApiResponse<UserDTO>> createSeller(@RequestBody UserDTO userDTO) {
+        userDTO.setRole("SELLER");
+        UserDTO newSeller = userService.register(userDTO);
+        return ResponseEntity.ok(ApiResponse.success(newSeller));
+    }
+
+    // Update seller
+    @PutMapping("/sellers/{id}")
+    public ResponseEntity<ApiResponse<UserDTO>> updateSeller(
+            @PathVariable Long id, @RequestBody UserDTO userDTO) {
+        UserDTO existing = userService.findDTOById(id);
+        if (userDTO.getName() != null) existing.setName(userDTO.getName());
+        if (userDTO.getSurname() != null) existing.setSurname(userDTO.getSurname());
+        UserDTO updated = userService.update(id, existing);
+        return ResponseEntity.ok(ApiResponse.success(updated));
+    }
+
+    // Update order status (admin side)
+    @PutMapping("/orders/{id}")
+    public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
+            @PathVariable Long id, @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        OrderDTO updated = orderService.updateOrderStatus(id, status, null);
+        return ResponseEntity.ok(ApiResponse.success("Order updated", updated));
+    }
+
+    // List orders with open payment issues
+    @GetMapping("/payment-issues")
+    public ResponseEntity<ApiResponse<List<OrderDTO>>> getPaymentIssues() {
+        List<IssueDTO> issues = issueService.getAllIssues().stream()
+            .filter(i -> "PAYMENT".equals(i.getType()) && "OPEN".equals(i.getStatus()))
+            .collect(Collectors.toList());
+        List<OrderDTO> orders = issues.stream()
+            .map(IssueDTO::getOrderItemId)
+            .distinct()
+            .map(orderService::findById)  // fetch the order by ID
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(orders));
+    }
+
+    // Resolve a payment issue
+    @PutMapping("/payment-issues/{id}/resolve")
+    public ResponseEntity<ApiResponse<?>> resolvePaymentIssue(@PathVariable Long id) {
+        issueService.resolveIssue(id, null);
+        return ResponseEntity.ok(ApiResponse.success("Issue resolved", null));
     }
 } 

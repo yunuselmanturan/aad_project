@@ -18,31 +18,29 @@ public class TransactionController {
 
     private final TransactionService service;
 
-    /* ---------- ADMIN: tüm işlemler ---------- */
+    /* ---------- ADMIN: filtered search  ---------- */
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    @GetMapping("/admin/transactions")
+    @GetMapping("/admin/transactions/search")          // <‑‑ path renamed
     public List<TransactionDto> adminTx(
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
-        @RequestParam(required = false) String sellerEmail,
-        @RequestParam(required = false) String paymentStatus
-    ) {
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(required = false) String sellerEmail,
+            @RequestParam(required = false) String paymentStatus) {
         return service.search(start, end, sellerEmail, paymentStatus);
     }
 
-    /* ---------- SELLER: kendi işlemleri ---------- */
+    /* ---------- SELLER: own transactions ---------- */
     @PreAuthorize("hasRole('SELLER')")
     @GetMapping("/seller/transactions")
     public List<TransactionDto> sellerTx(
-        Authentication auth,
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
-        @RequestParam(required = false) String paymentStatus
-    ) {
+            Authentication auth,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(required = false) String paymentStatus) {
         String sellerEmail = auth.getName();
         return service.search(start, end, sellerEmail, paymentStatus);
     }

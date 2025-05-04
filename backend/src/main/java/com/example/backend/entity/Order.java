@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@Data
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +33,9 @@ public class Order {
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
-    private String status; // e.g., PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+
+    @Column(name = "shipment_status")
+    private String shipmentStatus; // e.g., PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
@@ -43,6 +48,6 @@ public class Order {
     public Order(User user, BigDecimal totalAmount, String status) {
         this.user = user;
         this.totalAmount = totalAmount;
-        this.status = status;
+        this.shipmentStatus = status;
     }
 } 

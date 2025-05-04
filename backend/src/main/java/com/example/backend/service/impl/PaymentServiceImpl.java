@@ -5,6 +5,7 @@ import com.example.backend.entity.Payment;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.PaymentRepository;
+import com.example.backend.repository.TransactionRepository;
 import com.example.backend.service.PaymentService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -26,6 +27,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository; // Ensure this is the correct package for the TransactionRepository class
+    
 
     @Override
     public String createPaymentIntent(Long orderId) {
@@ -73,15 +78,18 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    Transaction tx = Transaction.builder()
+    private void createTransaction(Order order, Payment payment) {
+        Transaction tx = Transaction.builder()
                 .order(order)
                 .payment(payment)
-                .buyer(order.getBuyer())
-                .seller(order.getOrderItems().get(0).getProduct().getSeller()) // çoklu ürünse ihtiyaca göre değiştirin
+                .buyer(order.getUser())
+                .seller(order.getItems().get(0).getProduct().getSeller()) // çoklu ürünse ihtiyaca göre değiştirin
                 .amount(payment.getAmount())
                 .paymentStatus(payment.getStatus())
                 .shipmentStatus(order.getShipmentStatus())
                 .createdAt(LocalDateTime.now())
                 .build();
-        transactionRepository.save(tx);
+        transactionRepository.save(tx);}
+
+    
 }

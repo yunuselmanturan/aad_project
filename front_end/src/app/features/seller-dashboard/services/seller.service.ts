@@ -56,4 +56,5 @@ export class SellerService {
     return this.http.get<{[key: string]: any}>(`${this.apiUrl}/seller/stats`);
     // E.g., returns { monthlySales: [...], totalRevenue: ..., etc. }
   }
+
 }

@@ -92,9 +92,9 @@ public class ShipmentServiceImpl implements ShipmentService {
         // Update the order status to match
         Order order = shipment.getOrder();
         if (status.equals("DELIVERED")) {
-            order.setStatus("DELIVERED");
+            order.setShipmentStatus("DELIVERED");
         } else if (status.equals("CANCELLED")) {
-            order.setStatus("CANCELLED");
+            order.setShipmentStatus("CANCELLED");
         }
         orderRepository.save(order);
         

@@ -1,15 +1,9 @@
 package com.example.backend.controller;
 
-import com.example.backend.dto.ApiResponse;
-import com.example.backend.dto.OrderDTO;
-import com.example.backend.dto.ProductDTO;
-import com.example.backend.dto.ShipmentDTO;
+import com.example.backend.dto.*;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.ProductService;
 import com.example.backend.service.ShipmentService;
-import com.example.backend.service.TransactionService;
-import com.example.backend.entity.Product; // Ensure this path matches the actual location of the Product class
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,99 +17,90 @@ import java.util.Map;
 @RequestMapping("/api/seller")
 @PreAuthorize("hasRole('SELLER')")
 public class SellerController {
-    
-    @Autowired
-    private OrderService orderService;
-    
-    @Autowired
-    private ProductService productService;
-    
-    @Autowired
-    private ShipmentService shipmentService;
 
-    @Autowired
-    private TransactionService transactionService;
-    
-    // Order Management
+    @Autowired private OrderService orderService;
+    @Autowired private ProductService productService;
+    @Autowired private ShipmentService shipmentService;
+
+    /* ---------- ORDERS ---------- */
     @GetMapping("/orders")
     public ResponseEntity<ApiResponse<List<OrderDTO>>> getSellerOrders(Authentication authentication) {
         List<OrderDTO> orders = orderService.findSellerOrders(authentication);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
-    
+
     @PutMapping("/orders/{id}/status")
     public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam String status,
             Authentication authentication) {
         OrderDTO updatedOrder = orderService.updateOrderStatus(id, status, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Order status updated successfully", updatedOrder));
+        return ResponseEntity.ok(ApiResponse.success("Order status updated", updatedOrder));
     }
-    
-    // Product Management
+
+    /* ---------- PRODUCTS ---------- */
     @GetMapping("/products")
     public ResponseEntity<ApiResponse<List<ProductDTO>>> getSellerProducts(Authentication authentication) {
         List<ProductDTO> products = productService.findSellerProducts(authentication);
         return ResponseEntity.ok(ApiResponse.success(products));
     }
-    
+
     @PostMapping("/products")
     public ResponseEntity<ApiResponse<ProductDTO>> createProduct(
             @RequestBody ProductDTO productDTO,
             Authentication authentication) {
-        ProductDTO createdProduct = productService.createSellerProduct(productDTO, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Product created successfully", createdProduct));
+        ProductDTO created = productService.createSellerProduct(productDTO, authentication);
+        return ResponseEntity.ok(ApiResponse.success("Product created", created));
     }
-    
+
     @PutMapping("/products/{id}")
     public ResponseEntity<ApiResponse<ProductDTO>> updateProduct(
             @PathVariable Long id,
             @RequestBody ProductDTO productDTO,
             Authentication authentication) {
-        ProductDTO updatedProduct = productService.updateSellerProduct(id, productDTO, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Product updated successfully", updatedProduct));
+        ProductDTO updated = productService.updateSellerProduct(id, productDTO, authentication);
+        return ResponseEntity.ok(ApiResponse.success("Product updated", updated));
     }
-    
+
     @DeleteMapping("/products/{id}")
     public ResponseEntity<ApiResponse<?>> deleteProduct(
             @PathVariable Long id,
             Authentication authentication) {
         productService.deleteSellerProduct(id, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Product deleted successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("Product deleted", null));
     }
-    
-    // Shipment Management
+
+    /* ---------- SHIPMENTS ---------- */
     @GetMapping("/shipments")
     public ResponseEntity<ApiResponse<List<ShipmentDTO>>> getSellerShipments(Authentication authentication) {
         List<ShipmentDTO> shipments = shipmentService.findSellerShipments(authentication);
         return ResponseEntity.ok(ApiResponse.success(shipments));
     }
-    
+
     @PutMapping("/shipments/{id}/status")
     public ResponseEntity<ApiResponse<ShipmentDTO>> updateShipmentStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> statusUpdate,
+            @RequestBody Map<String, String> body,
             Authentication authentication) {
-        String status = statusUpdate.get("status");
-        String trackingNumber = statusUpdate.get("trackingNumber");
-        
-        ShipmentDTO updatedShipment = shipmentService.updateShipmentStatus(id, status, trackingNumber, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Shipment status updated successfully", updatedShipment));
+        String status        = body.get("status");
+        String trackingNo    = body.get("trackingNumber");
+        ShipmentDTO updated  = shipmentService.updateShipmentStatus(id, status, trackingNo, authentication);
+        return ResponseEntity.ok(ApiResponse.success("Shipment status updated", updated));
     }
-    
-    // Sales and Transaction Reports
-    @GetMapping("/transactions")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSellerTransactions(
+
+    /* ---------- TRANSACTION SUMMARY (renamed) ---------- */
+    @GetMapping("/transactions/report")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSellerTransactionReport(
             @RequestParam(required = false) String period,
             Authentication authentication) {
-        Map<String, Object> transactions = orderService.getSellerTransactions(period, authentication);
-        return ResponseEntity.ok(ApiResponse.success(transactions));
+        Map<String, Object> report = orderService.getSellerTransactions(period, authentication);
+        return ResponseEntity.ok(ApiResponse.success(report));
     }
 
-    @PostMapping("/products")
-    public Product addProduct(@RequestBody Product product, Authentication auth) {
-        String sellerEmail = auth.getName();
-        return productService.addProductForSeller(product, sellerEmail);
+    /* ---------- DASHBOARD STATS ---------- */
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSellerStats(Authentication authentication) {
+        Map<String, Object> stats = orderService.getSellerTransactions(null, authentication);
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
-
-} 
+}

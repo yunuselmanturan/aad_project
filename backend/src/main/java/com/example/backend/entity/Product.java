@@ -26,7 +26,7 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "seller_id", referencedColumnName = "user_id")
-    private User seller;  // New field linking Product to User with role SELLER
+    private User seller;
 
     @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "category_id")
@@ -42,6 +42,7 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
+    // Complete constructor including the seller field
     public Product(Store store, User seller, Category category, String name, String description, BigDecimal price, int stockQuantity) {
         this.store = store;
         this.seller = seller;

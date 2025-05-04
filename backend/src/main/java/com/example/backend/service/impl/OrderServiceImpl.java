@@ -102,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
         // Create order
         Order order = new Order();
         order.setUser(currentUser);
-        order.setStatus("PENDING");
+        order.setShipmentStatus("PENDING");
         order = orderRepository.save(order);
         
         // Create order items and calculate total
@@ -140,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
         // Update order with total and items
         order.setTotalAmount(totalAmount);
         order.setItems(orderItems);
-        order.setStatus("CONFIRMED");
+        order.setShipmentStatus("CONFIRMED");
         order = orderRepository.save(order);
         
         // Clear cart after successful order
@@ -183,7 +183,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Invalid status: " + status);
         }
         
-        order.setStatus(status);
+        order.setShipmentStatus(status);
         Order updatedOrder = orderRepository.save(order);
         
         return mapOrderToDTO(updatedOrder);
@@ -203,8 +203,8 @@ public class OrderServiceImpl implements OrderService {
         }
         
         // Only pending or confirmed orders can be cancelled
-        if (!order.getStatus().equals("PENDING") && !order.getStatus().equals("CONFIRMED")) {
-            throw new BadRequestException("Cannot cancel order with status: " + order.getStatus());
+        if (!order.getShipmentStatus().equals("PENDING") && !order.getShipmentStatus().equals("CONFIRMED")) {
+            throw new BadRequestException("Cannot cancel order with status: " + order.getShipmentStatus());
         }
         
         // Restore product stock
@@ -215,7 +215,7 @@ public class OrderServiceImpl implements OrderService {
         }
         
         // Update order status
-        order.setStatus("CANCELLED");
+        order.setShipmentStatus("CANCELLED");
         orderRepository.save(order);
     }
     
@@ -310,7 +310,7 @@ public class OrderServiceImpl implements OrderService {
         orderDTO.setId(order.getId());
         orderDTO.setOrderDate(order.getOrderDate());
         orderDTO.setTotalAmount(order.getTotalAmount());
-        orderDTO.setStatus(order.getStatus());
+        orderDTO.setStatus(order.getShipmentStatus());
         orderDTO.setUserEmail(order.getUser().getEmail());
         
         // Map order items
