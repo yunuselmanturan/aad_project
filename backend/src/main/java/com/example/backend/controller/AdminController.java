@@ -3,9 +3,12 @@ package com.example.backend.controller;
 import com.example.backend.dto.ApiResponse;
 import com.example.backend.dto.OrderDTO;
 import com.example.backend.dto.ProductDTO;
+import com.example.backend.dto.TransactionDto;
 import com.example.backend.dto.UserDTO;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.ProductService;
+import com.example.backend.service.TransactionService;
+import com.example.backend.entity.Transaction; // Ensure this is the correct package for the Transaction class
 import com.example.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,9 @@ public class AdminController {
     
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private TransactionService transactionService;
     
     // User Management
     @GetMapping("/users")
@@ -110,5 +116,10 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSystemStats() {
         Map<String, Object> stats = userService.getSystemStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    @GetMapping("/transactions")
+    public List<TransactionDto> getAllTransactions() {
+        return transactionService.getAllTransactions();
     }
 } 

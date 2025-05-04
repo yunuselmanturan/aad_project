@@ -7,6 +7,9 @@ import com.example.backend.dto.ShipmentDTO;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.ProductService;
 import com.example.backend.service.ShipmentService;
+import com.example.backend.service.TransactionService;
+import com.example.backend.entity.Product; // Ensure this path matches the actual location of the Product class
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +32,9 @@ public class SellerController {
     
     @Autowired
     private ShipmentService shipmentService;
+
+    @Autowired
+    private TransactionService transactionService;
     
     // Order Management
     @GetMapping("/orders")
@@ -105,4 +111,11 @@ public class SellerController {
         Map<String, Object> transactions = orderService.getSellerTransactions(period, authentication);
         return ResponseEntity.ok(ApiResponse.success(transactions));
     }
+
+    @PostMapping("/products")
+    public Product addProduct(@RequestBody Product product, Authentication auth) {
+        String sellerEmail = auth.getName();
+        return productService.addProductForSeller(product, sellerEmail);
+    }
+
 } 

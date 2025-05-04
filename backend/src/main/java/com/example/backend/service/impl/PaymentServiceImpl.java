@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import com.example.backend.entity.Transaction; // Ensure this is the correct package for the Transaction class
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -70,4 +72,16 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("Stripe API error: " + e.getMessage());
         }
     }
+
+    Transaction tx = Transaction.builder()
+                .order(order)
+                .payment(payment)
+                .buyer(order.getBuyer())
+                .seller(order.getOrderItems().get(0).getProduct().getSeller()) // çoklu ürünse ihtiyaca göre değiştirin
+                .amount(payment.getAmount())
+                .paymentStatus(payment.getStatus())
+                .shipmentStatus(order.getShipmentStatus())
+                .createdAt(LocalDateTime.now())
+                .build();
+        transactionRepository.save(tx);
 }
