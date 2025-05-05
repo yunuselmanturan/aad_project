@@ -30,7 +30,7 @@ export class SellerListComponent implements OnInit {
   }
 
   editSeller(seller: SellerAccount): void {
-    this.router.navigate(['/admin/sellers', seller.id]);
+    this.router.navigate(['/system-admin/sellers', seller.id]);
   }
 
   // Potential actions like approve or remove seller could be added here

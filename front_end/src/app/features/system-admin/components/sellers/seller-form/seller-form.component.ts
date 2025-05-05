@@ -59,7 +59,7 @@ export class SellerFormComponent implements OnInit {
       this.adminService.updateSeller(this.sellerId, data).subscribe({
         next: () => {
           this.notify.showSuccess('Seller updated.');
-          this.router.navigate(['/admin/sellers']);
+          this.router.navigate(['/system-admin/sellers']);
         },
         error: err => {
           console.error('Update seller failed', err);
@@ -71,7 +71,7 @@ export class SellerFormComponent implements OnInit {
       this.adminService.createSeller(data).subscribe({
         next: () => {
           this.notify.showSuccess('Seller account created.');
-          this.router.navigate(['/admin/sellers']);
+          this.router.navigate(['/system-admin/sellers']);
         },
         error: err => {
           console.error('Create seller failed', err);

@@ -36,7 +36,7 @@ export class SellerProductListComponent implements OnInit {
   }
 
   editProduct(product: Product): void {
-    this.router.navigate(['/seller-dashboard/products', product.id, 'edit']);
+    this.router.navigate(['/seller/products', product.id, 'edit']);
   }
 
   deleteProduct(product: Product): void {
@@ -56,6 +56,6 @@ export class SellerProductListComponent implements OnInit {
   }
 
   addNew(): void {
-    this.router.navigate(['/seller-dashboard/products/new']);
+    this.router.navigate(['/seller/products/new']);
   }
 }

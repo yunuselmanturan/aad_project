@@ -1,18 +1,18 @@
-import { environment } from './../../../environments/environment';
-// core/services/auth.service.ts
 import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, map } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { TokenStorageService } from './token-storage.service';
 import { isPlatformBrowser } from '@angular/common';
+
+import { environment } from '../../../environments/environment';
+import { TokenStorageService } from './token-storage.service';
 
 export interface User {
   id: number;
   name?: string;
   email: string;
   roles: string[];
-  // other user fields as needed
 }
 
 export interface ApiResponse<T> {
@@ -24,105 +24,62 @@ export interface ApiResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  public currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+
+  private apiUrl = environment.apiUrl;                   // http://localhost:8080/api
   private isBrowser: boolean;
 
-  private apiUrl = environment.apiUrl;  // e.g. "http://localhost:8080/api"
+  public currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$       = this.currentUserSubject.asObservable();
 
   constructor(
     private http: HttpClient,
-    public tokenStorage: TokenStorageService,
+    public  tokenStorage: TokenStorageService,
     private router: Router,
-    @Inject(PLATFORM_ID) platformId: Object
+    @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
 
-    // On service init, load token from storage and attempt to parse user if available
+    /* bootstrap stored login */
     if (this.isBrowser) {
-      const savedUser = this.tokenStorage.getUser();
-      if (savedUser) {
-        this.currentUserSubject.next(savedUser);
-      }
+      const stored = this.tokenStorage.getUser();
+      if (stored) this.currentUserSubject.next(stored);
     }
   }
 
-  login(email: string, password: string): Observable<any> {
-    const loginData = { email, password };
-    // Use fixed URL to avoid any path issues
-    return new Observable(observer => {
-      this.http.post<ApiResponse<any>>('http://localhost:8080/api/auth/login', loginData).subscribe({
-        next: response => {
-          if (!response.success) {
-            observer.error(response.message);
-            return;
-          }
+  /* ───────────────────────────── login / logout ─────────────────────────── */
 
-          const data = response.data;
-          // Save token and user info
-          if (data.token) {
-            this.tokenStorage.saveToken(data.token);
-          }
-          // If backend returns user details with roles
-          if (data.user) {
-            this.tokenStorage.saveUser(data.user);
-            this.currentUserSubject.next(data.user);
-          } else {
-            // If user info not returned, decode token to get roles (or call another endpoint to get profile)
-            const user = this.decodeToken(data.token);
-            this.tokenStorage.saveUser(user);
-            this.currentUserSubject.next(user);
-          }
+  login(email: string, password: string): Observable<boolean> {
+    return new Observable<boolean>(observer => {
+      this.http.post<ApiResponse<any>>(`${this.apiUrl}/auth/login`, { email, password })
+        .subscribe({
+          next: res => {
+            if (!res.success) { observer.error(res.message); return; }
 
-          observer.next(true);
-          observer.complete();
-        },
-        error: err => {
-          observer.error(err);
-        }
-      });
+            const { token, user } = res.data;
+            if (token) this.tokenStorage.saveToken(token);
+
+            const u: User = user ?? this.decodeToken(token);
+            this.tokenStorage.saveUser(u);
+            this.currentUserSubject.next(u);
+
+            observer.next(true); observer.complete();
+          },
+          error: err => observer.error(err)
+        });
     });
   }
 
-  register(userData: { name: string; email: string; password: string }): Observable<any> {
-    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/auth/register`, userData)
-      .pipe(map(response => response.data));
+  register(body: {name: string; email: string; password: string}) {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/auth/register`, body)
+                    .pipe(map(r => r.data));
   }
 
   logout(): void {
-    // Clear stored data and update currentUser
     this.tokenStorage.signOut();
     this.currentUserSubject.next(null);
-    // Optionally, redirect done in Header or guard if unauthorized.
   }
 
-  // Helper to decode JWT token and extract user info (like roles)
-  private decodeToken(token: string): User {
-    // Basic JWT decode without external library:
-    try {
-      let payload;
-      if (this.isBrowser) {
-        payload = JSON.parse(atob(token.split('.')[1])); // decode payload part in browser
-      } else {
-        // Use Buffer for Node.js environment (SSR)
-        const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
-        payload = JSON.parse(jsonPayload);
-      }
-
-      const user: User = {
-        id: payload.id,
-        email: payload.sub || payload.email,
-        roles: payload.roles || []
-      };
-      // include name if present
-      if (payload.name) user.name = payload.name;
-      return user;
-    } catch (e) {
-      console.error('Failed to decode token', e);
-      return { id: 0, email: '', roles: [] };
-    }
-  }
+  /* ───────────────────────────── helpers ─────────────────────────── */
 
   isLoggedIn(): boolean {
     return !!this.tokenStorage.getToken();
@@ -130,8 +87,29 @@ export class AuthService {
 
   hasRole(role: string): boolean {
     const user = this.currentUserSubject.value;
-    if (!user) return false;
+    if (!user || !Array.isArray(user.roles)) return false;           // guard
     return user.roles.includes(role) || user.roles.includes(`ROLE_${role}`);
-    // (assuming roles might be stored as 'ADMIN' or 'ROLE_ADMIN'; this check covers both cases)
+  }
+
+  /** naïve JWT decode (no external lib) */
+  private decodeToken(token: string): User {
+    try {
+      const base64 = token.split('.')[1]
+                          .replace(/-/g, '+')
+                          .replace(/_/g, '/');
+      const json   = (this.isBrowser
+                      ? atob(base64)
+                      : Buffer.from(base64, 'base64').toString('utf8'));
+      const payload = JSON.parse(json);
+      return {
+        id   : payload.id,
+        email: payload.sub ?? payload.email,
+        name : payload.name,
+        roles: payload.roles ?? []
+      };
+    } catch (e) {
+      console.error('JWT decode failed', e);
+      return { id: 0, email: '', roles: [] };
+    }
   }
 }

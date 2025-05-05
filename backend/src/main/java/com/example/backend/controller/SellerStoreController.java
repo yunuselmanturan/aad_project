@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/seller/stores")
-@PreAuthorize("hasAnyAuthority('SELLER', 'PLATFORM_ADMIN')")
 public class SellerStoreController {
 
     @Autowired

@@ -1,10 +1,10 @@
-import { environment } from './../../../../environments/environment';
-// features/seller-dashboard/services/seller.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Product } from '../../catalogue/services/product.service';
-import { Order } from '../../checkout/services/order.service';
+
+import { environment } from '../../../../environments/environment';
+import { Product }     from '../../catalogue/services/product.service';
+import { Order }       from '../../checkout/services/order.service';
 
 export interface Store {
   id: number;
@@ -15,46 +15,57 @@ export interface Store {
 
 @Injectable({ providedIn: 'root' })
 export class SellerService {
-  private apiUrl = environment.apiUrl;
+
+  private apiUrl = environment.apiUrl;            // http://localhost:8080/api
+
   constructor(private http: HttpClient) {}
 
-  // Store management
+  /* ───────────── stores ───────────── */
+
   getSellerStores(): Observable<Store[]> {
     return this.http.get<Store[]>(`${this.apiUrl}/seller/stores`);
   }
 
-  // Products management
+  /* ───────────── products ──────────── */
+
   getSellerProducts(): Observable<Product[]> {
     return this.http.get<Product[]>(`${this.apiUrl}/seller/products`);
-    // Only returns products belonging to the logged-in seller
   }
+
   getProduct(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.apiUrl}/seller/products/${id}`);
   }
-  createProduct(productData: any): Observable<Product> {
-    return this.http.post<Product>(`${this.apiUrl}/seller/products`, productData);
+
+  createProduct(body: any): Observable<Product> {
+    return this.http.post<Product>(`${this.apiUrl}/seller/products`, body);
   }
-  updateProduct(id: number, productData: any): Observable<Product> {
-    return this.http.put<Product>(`${this.apiUrl}/seller/products/${id}`, productData);
+
+  updateProduct(id: number, body: any): Observable<Product> {
+    return this.http.put<Product>(`${this.apiUrl}/seller/products/${id}`, body);
   }
+
   deleteProduct(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/seller/products/${id}`);
   }
 
-  // Orders management
+  /* ───────────── orders ───────────── */
+
   getSellerOrders(): Observable<Order[]> {
     return this.http.get<Order[]>(`${this.apiUrl}/seller/orders`);
-    // Returns orders that include products of this seller
-  }
-  markOrderShipped(orderId: number, trackingInfo: any): Observable<Order> {
-    return this.http.put<Order>(`${this.apiUrl}/seller/orders/${orderId}/ship`, trackingInfo);
-    // Mark order as shipped, attach tracking (trackingInfo could include tracking number, carrier, etc.)
   }
 
-  // Analytics
-  getSalesStats(): Observable<{[key: string]: any}> {
-    return this.http.get<{[key: string]: any}>(`${this.apiUrl}/seller/stats`);
-    // E.g., returns { monthlySales: [...], totalRevenue: ..., etc. }
+  markOrderShipped(orderId: number, body: any): Observable<Order> {
+    return this.http.put<Order>(`${this.apiUrl}/seller/orders/${orderId}/ship`, body);
   }
 
+  /* ───────────── analytics ─────────── */
+
+  /**
+   * If <code>period</code> is omitted we ask the backend for the full history.
+   * Accepts: daily / weekly / monthly / yearly (backend is tolerant).
+   */
+  getSalesStats(period?: string): Observable<{[k: string]: any}> {
+    const opts = period ? { params: new HttpParams().set('period', period) } : {};
+    return this.http.get<{[k: string]: any}>(`${this.apiUrl}/seller/stats`, opts);
+  }
 }

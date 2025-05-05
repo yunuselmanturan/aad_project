@@ -41,4 +41,8 @@ export class SellerOrderListComponent implements OnInit {
     return order.items.reduce((total, item) => total + item.price * item.quantity, 0);
   }
 
+  addNew(): void {
+    this.router.navigate(['/seller/products/new']);
+  }
+
 }
