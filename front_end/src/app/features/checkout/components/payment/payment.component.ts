@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PaymentMethod } from '../../../auth/components/user-profile/user-profile.component';
 import { OrderService, Order } from '../../services/order.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-payment',
@@ -18,6 +19,7 @@ export class PaymentComponent implements OnInit {
   paymentForm!: FormGroup;
   error: string | null = null;
   processing: boolean = false;
+  clientSecret: string | null = null;
 
   savedPaymentMethods: PaymentMethod[] = [];
   useExistingPayment: boolean = true;
@@ -36,7 +38,11 @@ export class PaymentComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Initialize payment form
+    this.initializeForm();
+    this.loadOrderAndCreatePaymentIntent();
+  }
+
+  private initializeForm(): void {
     this.paymentForm = this.fb.group({
       selectedPaymentId: ['', Validators.required],
       newPayment: this.fb.group({
@@ -48,25 +54,17 @@ export class PaymentComponent implements OnInit {
         savePayment: [true]
       })
     });
+  }
 
-    // Retrieve orderId from session or redirect if not present
+  private loadOrderAndCreatePaymentIntent(): void {
     const idStr = sessionStorage.getItem('currentOrderId');
-    if (idStr) {
-      this.orderId = Number(idStr);
-      this.loadOrderDetails();
-    } else {
-      // If no order id, redirect to cart page
+    if (!idStr) {
       this.router.navigate(['/cart']);
+      return;
     }
 
-    // Load user's saved payment methods if logged in
-    if (this.isLoggedIn) {
-      this.loadPaymentMethods();
-    } else {
-      // If not logged in, default to new payment method
-      this.useExistingPayment = false;
-      this.showPaymentForm = true;
-    }
+    this.orderId = Number(idStr);
+    this.loadOrderDetails();
   }
 
   loadOrderDetails(): void {
@@ -75,10 +73,26 @@ export class PaymentComponent implements OnInit {
     this.orderService.getOrder(this.orderId).subscribe({
       next: (order: Order) => {
         this.orderDetails = order;
+        // Create payment intent after loading order
+        this.createPaymentIntent();
       },
       error: (err: any) => {
         console.error('Error fetching order details', err);
         this.error = 'Could not load order details.';
+      }
+    });
+  }
+
+  private createPaymentIntent(): void {
+    if (!this.orderId) return;
+
+    this.paymentService.createPaymentIntent(this.orderId).subscribe({
+      next: (response) => {
+        this.clientSecret = response.clientSecret;
+      },
+      error: (err) => {
+        console.error('Error creating payment intent:', err);
+        this.error = 'Could not initialize payment. Please try again.';
       }
     });
   }
@@ -134,15 +148,8 @@ export class PaymentComponent implements OnInit {
     return 'xxxx-xxxx-xxxx-' + cardNumber.slice(-4);
   }
 
-  pay(): void {
-    if (!this.orderId) return;
-
-    if (this.useExistingPayment && this.paymentForm.get('selectedPaymentId')?.invalid) {
-      this.error = 'Please select a payment method.';
-      return;
-    }
-
-    if (!this.useExistingPayment && this.paymentForm.get('newPayment')?.invalid) {
+  async pay(): Promise<void> {
+    if (!this.orderId || !this.clientSecret || this.paymentForm.invalid) {
       this.error = 'Please fill in all required payment fields correctly.';
       return;
     }
@@ -150,57 +157,34 @@ export class PaymentComponent implements OnInit {
     this.processing = true;
     this.error = null;
 
-    let paymentInfo: any;
-
-    if (this.useExistingPayment) {
-      const selectedPaymentId = this.paymentForm.value.selectedPaymentId;
-      const selectedPayment = this.savedPaymentMethods.find(pm => pm.id === selectedPaymentId);
-
-      if (!selectedPayment) {
-        this.error = 'Selected payment method not found.';
-        this.processing = false;
-        return;
+    try {
+      const result = await this.confirmPayment();
+      if (result.status === 'SUCCESS') {
+        sessionStorage.removeItem('currentOrderId');
+        this.router.navigate(['/checkout/success'], {
+          queryParams: { orderId: this.orderId }
+        });
+      } else {
+        this.error = 'Payment failed. Please try again.';
       }
+    } catch (err) {
+      console.error('Payment error:', err);
+      this.error = 'Payment could not be processed.';
+    } finally {
+      this.processing = false;
+    }
+  }
 
-      paymentInfo = {
-        paymentMethodId: selectedPayment.id,
-        // Include minimal info for existing payment method
-        cardNumber: selectedPayment.cardNumber.slice(-4),
-        cardholderName: selectedPayment.cardholderName
-      };
-    } else {
-      const newPayment = this.paymentForm.get('newPayment')?.value;
-      paymentInfo = {
-        cardNumber: newPayment.cardNumber,
-        cardholderName: newPayment.cardholderName,
-        expiryMonth: newPayment.expiryMonth,
-        expiryYear: newPayment.expiryYear,
-        cvv: newPayment.cvv
-      };
-
-      // If user is logged in and wants to save the payment method, do it
-      if (this.isLoggedIn && newPayment.savePayment) {
-        this.saveNewPaymentMethod(newPayment);
-      }
+  private async confirmPayment(): Promise<{ status: string }> {
+    if (!this.orderId || !this.clientSecret) {
+      throw new Error('Missing payment information');
     }
 
-    // Process the payment
-    this.paymentService.processPayment(this.orderId, paymentInfo).subscribe({
-      next: res => {
-        this.processing = false;
-        if (res.status === 'SUCCESS') {
-          sessionStorage.removeItem('currentOrderId');
-          this.router.navigate(['/checkout/success']);
-        } else {
-          this.error = 'Payment failed. Please try another method.';
-        }
-      },
-      error: err => {
-        console.error('Payment error', err);
-        this.processing = false;
-        this.error = 'Payment could not be processed.';
-      }
-    });
+    // Here you would typically handle the actual payment confirmation
+    return firstValueFrom(this.paymentService.confirmPayment(
+      this.orderId,
+      this.clientSecret
+    ));
   }
 
   private saveNewPaymentMethod(paymentData: any): void {
