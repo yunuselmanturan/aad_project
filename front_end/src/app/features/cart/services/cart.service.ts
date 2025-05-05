@@ -151,11 +151,12 @@ export class CartService {
     }
   }
 
-  removeItem(productId: number): void {
+  removeItem(cartItemId: number): void {
     if (!this.isBrowser) return;
 
     if (this.authService.isLoggedIn()) {
-      this.http.delete<ApiResponse<null>>(`${this.apiUrl}/items/${productId}`)
+      // Using cart item ID in the URL
+      this.http.delete<ApiResponse<null>>(`${this.apiUrl}/items/${cartItemId}`)
         .subscribe({
           next: () => {
             this.notificationService.showSuccess('Item removed from cart');
@@ -167,23 +168,25 @@ export class CartService {
           }
         });
     } else {
+      // For local storage, we still need to find by product.id
       let items = this.itemsSubject.value;
-      items = items.filter(it => it.product.id !== productId);
+      items = items.filter(it => it.id !== cartItemId);
       this.updateLocalCart(items);
       this.notificationService.showSuccess('Item removed from cart');
     }
   }
 
-  updateQuantity(productId: number, quantity: number): void {
+  updateQuantity(cartItemId: number, quantity: number): void {
     if (!this.isBrowser) return;
 
     if (quantity <= 0) {
-      this.removeItem(productId);
+      this.removeItem(cartItemId);
       return;
     }
 
     if (this.authService.isLoggedIn()) {
-      this.http.put<ApiResponse<CartItem>>(`${this.apiUrl}/items/${productId}`, { quantity })
+      // Using cart item ID in the URL
+      this.http.put<ApiResponse<CartItem>>(`${this.apiUrl}/items/${cartItemId}`, { quantity })
         .pipe(map(response => response.data))
         .subscribe({
           next: () => {
@@ -196,8 +199,9 @@ export class CartService {
           }
         });
     } else {
+      // For local storage, update using cart item ID
       const items = [...this.itemsSubject.value];
-      const idx = items.findIndex(it => it.product.id === productId);
+      const idx = items.findIndex(it => it.id === cartItemId);
       if (idx >= 0) {
         items[idx].quantity = quantity;
         this.updateLocalCart(items);

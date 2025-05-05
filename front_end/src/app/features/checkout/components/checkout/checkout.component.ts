@@ -6,6 +6,8 @@ import { OrderService } from '../../services/order.service';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Address } from '../../../auth/components/user-profile/user-profile.component';
+import { AddressService } from '../../../../core/services/address.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-checkout',
@@ -13,13 +15,13 @@ import { Address } from '../../../auth/components/user-profile/user-profile.comp
   templateUrl: './checkout.component.html'
 })
 export class CheckoutComponent implements OnInit {
+  savedAddresses: Address[] = [];
   checkoutForm!: FormGroup;
   addressForm!: FormGroup;
   cartItems: CartItem[] = [];
   submitted: boolean = false;
   error: string | null = null;
 
-  savedAddresses: Address[] = [];
   useExistingAddress: boolean = true;
   showAddressForm: boolean = false;
 
@@ -31,8 +33,10 @@ export class CheckoutComponent implements OnInit {
     private fb: FormBuilder,
     private cartService: CartService,
     private orderService: OrderService,
+    private addressService: AddressService,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private notify: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -74,36 +78,36 @@ export class CheckoutComponent implements OnInit {
 
   // Load user's saved addresses
   loadUserAddresses(): void {
-    // In a real app, this would be an API call
-    // For now, we'll mock the data (similar to the profile component)
-    this.savedAddresses = [
-      {
-        id: 1,
-        street: '123 Main St',
-        city: 'Anytown',
-        state: 'ST',
-        zipCode: '12345',
-        country: 'USA',
-        isDefault: true
-      }
-    ];
-
-    // If user has saved addresses, select the default one
-    if (this.savedAddresses.length > 0) {
-      const defaultAddress = this.savedAddresses.find(addr => addr.isDefault);
-      if (defaultAddress) {
-        this.checkoutForm.patchValue({
-          selectedAddressId: defaultAddress.id
-        });
-      } else {
-        this.checkoutForm.patchValue({
-          selectedAddressId: this.savedAddresses[0].id
-        });
-      }
-    } else {
-      // If no saved addresses, show the address form
-      this.useExistingAddress = false;
-      this.showAddressForm = true;
+    if (this.isLoggedIn) {
+      this.addressService.getAddresses().subscribe({
+        next: (response) => {
+          this.savedAddresses = response.data.map(addr => ({
+            ...addr,
+            isDefault: addr.primary || false
+          }));
+          if (this.savedAddresses.length > 0) {
+            const defaultAddress = this.savedAddresses.find(addr => addr);
+            if (defaultAddress) {
+              this.checkoutForm.patchValue({
+                selectedAddressId: defaultAddress.id
+              });
+            } else {
+              this.checkoutForm.patchValue({
+                selectedAddressId: this.savedAddresses[0].id
+              });
+            }
+          } else {
+            this.useExistingAddress = false;
+            this.showAddressForm = true;
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load addresses:', error);
+          this.error = 'Failed to load saved addresses';
+          this.useExistingAddress = false;
+          this.showAddressForm = true;
+        }
+      });
     }
   }
 
@@ -123,81 +127,80 @@ export class CheckoutComponent implements OnInit {
 
   onSubmit(): void {
     this.submitted = true;
-
-    let shippingInfo: any;
+    this.error = null;
 
     if (this.useExistingAddress) {
-      // Using a saved address
       if (this.checkoutForm.invalid) return;
 
       const selectedAddressId = this.checkoutForm.value.selectedAddressId;
-      const selectedAddress = this.savedAddresses.find(addr => addr.id === selectedAddressId);
-
-      if (!selectedAddress) {
-        this.error = 'Please select a valid address.';
-        return;
-      }
-
-      shippingInfo = {
-        fullName: this.authService.currentUserSubject.value?.name,
-        address: selectedAddress.street,
-        city: selectedAddress.city,
-        state: selectedAddress.state,
-        postalCode: selectedAddress.zipCode,
-        country: selectedAddress.country,
-        addressId: selectedAddress.id
-      };
+      this.createOrder({ addressId: selectedAddressId });
     } else {
-      // Using a new address
       if (this.addressForm.invalid) return;
 
       const addressData = this.addressForm.value;
-
-      shippingInfo = {
-        fullName: this.authService.currentUserSubject.value?.name || 'Guest',
-        address: addressData.street,
-        city: addressData.city,
-        state: addressData.state,
-        postalCode: addressData.zipCode,
-        country: addressData.country
-      };
-
-      // If user is logged in and wants to save the address, do it
       if (this.isLoggedIn && addressData.saveAddress) {
-        this.saveNewAddress(addressData);
+        // Save address first, then create order
+        this.addressService.createAddress({
+          street: addressData.street,
+          city: addressData.city,
+          state: addressData.state,
+          zipCode: addressData.zipCode,
+          country: addressData.country,
+          primary: false
+        }).subscribe({
+          next: (response) => {
+            this.createOrder({ addressId: response.data.id });
+          },
+          error: (error) => {
+            console.error('Failed to save address:', error);
+            this.error = 'Failed to save address';
+          }
+        });
+      } else {
+        // Guest checkout - pass address directly
+        this.createOrder({
+          address: addressData
+        });
       }
     }
+  }
 
-    // Call OrderService to create order with the shipping info
+  private createOrder(shippingInfo: any): void {
     this.orderService.createOrder(shippingInfo, this.cartItems).subscribe({
-      next: order => {
-        // Store the order ID for the payment step
-        sessionStorage.setItem('currentOrderId', String(order.id));
-        this.router.navigate(['/checkout/payment']);
+      next: (order) => {
+        this.cartService.clearCart();
+        this.router.navigate(['/checkout/success'], {
+          queryParams: { orderId: order.id }
+        });
       },
-      error: err => {
-        console.error('Order creation failed', err);
+      error: (err) => {
+        console.error('Order creation failed:', err);
         this.error = 'Failed to create order. Please try again.';
       }
     });
   }
 
   private saveNewAddress(addressData: any): void {
-    // In a real app, this would be an API call to save the address
-    console.log('Saving new address:', addressData);
-    // Mock implementation - we'd normally send this to the backend
-    const newAddress: Address = {
-      id: Date.now(), // Temporary ID
+    const newAddress = {
       street: addressData.street,
       city: addressData.city,
       state: addressData.state,
       zipCode: addressData.zipCode,
       country: addressData.country,
-      isDefault: false
+      primary: false
     };
 
-    // Update the local list
-    this.savedAddresses.push(newAddress);
+    this.addressService.createAddress(newAddress).subscribe({
+      next: (response) => {
+        const savedAddress = { ...response.data, isDefault: response.data.primary || false };
+        this.savedAddresses.push(savedAddress);
+        return savedAddress.id; // Return the ID for order creation
+      },
+      error: (error) => {
+        console.error('Failed to save address:', error);
+        throw new Error('Failed to save address');
+      }
+    });
   }
 
   calculateTotal(): number {

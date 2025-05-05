@@ -46,11 +46,13 @@ export class CartComponent implements OnInit {
       this.notify.showError('Invalid quantity');
       return;
     }
-    this.cartService.updateQuantity(item.product.id, quantity);
+    // Use cart item's ID instead of product.id
+    this.cartService.updateQuantity(item.id, quantity);
   }
 
   removeItem(item: CartItem): void {
-    this.cartService.removeItem(item.product.id);
+    // Use cart item's ID instead of product.id
+    this.cartService.removeItem(item.id);
   }
 
   proceedToCheckout(): void {

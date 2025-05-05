@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment.development';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Product } from '../../catalogue/services/product.service';
+import { CartItem } from '../../cart/services/cart.service';
 
 export interface OrderItem {
   id?: number;
@@ -25,6 +26,21 @@ export interface Order {
   paymentMethod?: string;
 }
 
+export interface CreateOrderRequest {
+  addressId?: number;
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  items: {
+    productId: number;
+    quantity: number;
+  }[];
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -41,6 +57,19 @@ export class OrderService {
     private notificationService: NotificationService
   ) {}
 
+  createOrder(shippingInfo: any, cartItems: CartItem[]): Observable<any> {
+    const orderData: CreateOrderRequest = {
+      ...(shippingInfo.addressId ? { addressId: shippingInfo.addressId } : { address: shippingInfo.address }),
+      items: cartItems.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity
+      }))
+    };
+
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/orders`, orderData)
+      .pipe(map(response => response.data));
+  }
+
   // Get current user's orders
   getUserOrders(): Observable<Order[]> {
     return this.http.get<ApiResponse<Order[]>>(this.apiUrl)
@@ -54,16 +83,7 @@ export class OrderService {
   }
 
   // Create a new order
-  createOrder(): Observable<Order> {
-    return this.http.post<ApiResponse<Order>>(this.apiUrl, {})
-      .pipe(
-        map(response => response.data),
-        map(order => {
-          this.notificationService.showSuccess('Order placed successfully');
-          return order;
-        })
-      );
-  }
+
 
   // Cancel an order
   cancelOrder(orderId: number): Observable<any> {

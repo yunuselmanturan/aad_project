@@ -46,4 +46,13 @@ public class CartController {
         cartService.clearCart();
         return ResponseEntity.ok(ApiResponse.success("Cart cleared successfully", null));
     }
+
+    @PutMapping("/items/{id}")
+public ResponseEntity<ApiResponse<CartItemDTO>> updateCartItem(
+        @PathVariable Long id, @RequestBody Map<String, Integer> body) {
+    int quantity = body.get("quantity");
+    CartItemDTO updated = cartService.updateCartItem(id, quantity);
+    return ResponseEntity.ok(ApiResponse.success("Cart item updated", updated));
+}
+
 } 

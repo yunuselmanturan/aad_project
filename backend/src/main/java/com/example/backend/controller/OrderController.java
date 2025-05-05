@@ -71,4 +71,13 @@ public class OrderController {
         OrderDTO updatedOrder = orderService.updateOrderStatus(id, status, authentication);
         return ResponseEntity.ok(ApiResponse.success("Order status updated successfully", updatedOrder));
     }
+
+    @PostMapping("/{id}/pay")
+@PreAuthorize("isAuthenticated()")
+public ResponseEntity<ApiResponse<OrderDTO>> payOrder(
+        @PathVariable Long id, Authentication auth) {
+    OrderDTO paidOrder = orderService.updateOrderStatus(id, "PAID", auth);
+    return ResponseEntity.ok(ApiResponse.success("Payment processed", paidOrder));
+}
+
 } 

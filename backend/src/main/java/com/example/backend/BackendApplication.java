@@ -68,53 +68,6 @@ public class BackendApplication {
                 System.out.println("Sample customer created");
             }
 
-            // Add default categories if none exist
-            if (categoryRepository.count() == 0) {
-                Category electronics = new Category();
-                electronics.setName("Electronics");
-                categoryRepository.save(electronics);
-
-                Category books = new Category();
-                books.setName("Books");
-                categoryRepository.save(books);
-
-                Category clothing = new Category();
-                clothing.setName("Clothing");
-                categoryRepository.save(clothing);
-
-                System.out.println("Default categories created");
-            }
-
-            // Add some products for seller@example.com
-            // Retrieve the seller
-            User seller = userRepository.findByEmail("seller@example.com").orElse(null);
-            if (seller != null) {
-                // Create a default store if none exists for the seller
-                Store store = storeRepository.findBySeller(seller).stream().findFirst().orElse(null);
-                if (store == null) {
-                    store = new Store();
-                    store.setStoreName("Default Store");
-                    store.setSeller(seller);
-                    storeRepository.save(store);
-                    System.out.println("Default store created for seller");
-                }
-
-                // Retrieve a category to assign to the product, e.g., "Electronics"
-                Category electronicsCategory = categoryRepository.findByName("Electronics").stream().findFirst().orElse(null);
-                if (electronicsCategory != null) {
-                    // Create and save a product
-                    Product product = new Product();
-                    product.setName("Smartphone Model X");
-                    product.setDescription("Latest smartphone with cutting-edge features.");
-                    product.setPrice(new BigDecimal("499.99"));
-                    product.setStockQuantity(50);
-                    product.setSeller(seller);
-                    product.setStore(store);
-                    product.setCategory(electronicsCategory);
-                    productRepository.save(product);
-                    System.out.println("Default product created for seller");
-                }
-            }
         };
     }
 }

@@ -164,4 +164,19 @@ public class CartServiceImpl implements CartService {
         
         return dto;
     }
+
+    public CartItemDTO updateCartItem(Long cartItemId, int quantity) {
+        if (quantity <= 0) throw new BadRequestException("Quantity must be > 0");
+        User user = getCurrentUser();
+        Cart cart = getOrCreateCart(user);
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart item not found: " + cartItemId));
+        if (!cartItem.getCart().getId().equals(cart.getId())) {
+            throw new BadRequestException("Cart item does not belong to user");
+        }
+        cartItem.setQuantity(quantity);
+        cartItem = cartItemRepository.save(cartItem);
+        return mapCartItemToDTO(cartItem);
+    }
+    
 } 
