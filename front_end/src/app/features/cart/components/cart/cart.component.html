@@ -1,25 +1,44 @@
-<!-- features/cart/components/cart/cart.component.html -->
-<h2>Your Cart</h2>
-<div *ngIf="cartItems.length; else emptyCart">
-  <div class="cart-list">
-    <div class="cart-item" *ngFor="let item of cartItems">
-      <div class="prod-info">
-        <strong>{{ item.product.name }}</strong>
-        <span>{{ item.product.price | money }}</span>
-      </div>
-      <div class="qty-control">
-        <input type="number" [value]="item.quantity" (change)="updateQuantity(item, $any($event.target).value)" min="1">
-      </div>
-      <div class="remove">
-        <button (click)="removeItem(item)">Remove</button>
+<div class="container">
+  <h2>Your Cart</h2>
+
+  <div *ngIf="cartItems.length > 0; else emptyCart">
+    <div class="cart-items">
+      <div class="cart-item" *ngFor="let item of cartItems">
+        <div class="item-details">
+          <img [src]="item.product.imageUrls?.[0] || 'assets/placeholder.png'"
+               [alt]="item.product.name"
+               class="item-image">
+          <div class="item-info">
+            <h3>{{ item.product.name }}</h3>
+            <p>Price: {{ item.product.price | currency }}</p>
+          </div>
+        </div>
+
+        <div class="item-controls">
+          <input type="number"
+                 [value]="item.quantity"
+                 (change)="updateQuantity(item, $any($event.target).value)"
+                 min="1"
+                 class="quantity-input">
+          <button (click)="removeItem(item)" class="remove-btn">Remove</button>
+        </div>
       </div>
     </div>
+
+    <div class="cart-summary">
+      <p class="total">Total: <strong>{{ totalPrice | currency }}</strong></p>
+      <button (click)="proceedToCheckout()"
+              [disabled]="cartItems.length === 0"
+              class="checkout-btn">
+        Proceed to Checkout
+      </button>
+    </div>
   </div>
-  <div class="cart-summary">
-    <p>Total: <strong>{{ totalPrice | money }}</strong></p>
-    <button (click)="proceedToCheckout()">Checkout</button>
-  </div>
+
+  <ng-template #emptyCart>
+    <div class="empty-cart">
+      <p>Your cart is empty</p>
+      <a routerLink="/catalogue" class="continue-shopping">Continue Shopping</a>
+    </div>
+  </ng-template>
 </div>
-<ng-template #emptyCart>
-  <p>Your cart is empty. <a routerLink="/catalogue">Continue shopping</a>.</p>
-</ng-template>

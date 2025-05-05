@@ -1,12 +1,11 @@
 import { NotificationService } from './../../../../core/services/notification.service';
-// features/cart/components/cart/cart.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CartService, CartItem } from '../../services/cart.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-cart',
-  standalone: false,
+  standalone: false,  // Keep this false since we're using NgModule
   templateUrl: './cart.component.html',
   styleUrls: ['./cart.component.css']
 })
@@ -14,36 +13,47 @@ export class CartComponent implements OnInit {
   cartItems: CartItem[] = [];
   totalPrice: number = 0;
 
-  constructor(private cartService: CartService, private notify: NotificationService, private router: Router) {}
+  constructor(
+    private cartService: CartService,
+    private notify: NotificationService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     // Subscribe to cart changes
-    this.cartService.items$.subscribe(items => {
-      this.cartItems = items;
-      this.calculateTotal();
+    this.cartService.items$.subscribe({
+      next: (items) => {
+        this.cartItems = items;
+        this.calculateTotal();
+      },
+      error: (err) => {
+        console.error('Error loading cart items:', err);
+        this.notify.showError('Failed to load cart items');
+      }
     });
   }
 
   calculateTotal(): void {
-    this.totalPrice = this.cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    this.totalPrice = this.cartItems.reduce(
+      (sum, item) => sum + (item.product.price * item.quantity),
+      0
+    );
+  }
+
+  updateQuantity(item: CartItem, newQty: number): void {
+    const quantity = parseInt(newQty.toString());
+    if (isNaN(quantity) || quantity < 1) {
+      this.notify.showError('Invalid quantity');
+      return;
+    }
+    this.cartService.updateQuantity(item.product.id, quantity);
   }
 
   removeItem(item: CartItem): void {
     this.cartService.removeItem(item.product.id);
-    this.notify.showSuccess(`${item.product.name} removed from cart.`);
-  }
-
-  updateQuantity(item: CartItem, newQty: number): void {
-    if (newQty < 1) {
-      this.removeItem(item);
-    } else {
-      this.cartService.updateQuantity(item.product.id, newQty);
-    }
   }
 
   proceedToCheckout(): void {
-    if (!this.cartItems.length) return;
-    // Navigate to checkout page
     this.router.navigate(['/checkout']);
   }
 }

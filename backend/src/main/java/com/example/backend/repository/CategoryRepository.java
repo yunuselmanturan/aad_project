@@ -9,4 +9,5 @@ import java.util.List;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByParentCategoryIsNull();
     List<Category> findByParentCategory(Category parentCategory);
+    List<Category> findByName(String name);
 } 

@@ -8,10 +8,12 @@
   </div>
   <div>
     <label>Store:</label>
-    <select formControlName="storeId">
-      <option *ngFor="let store of sellerStores" [value]="store.id">{{ store.name }}</option>
+    <select formControlName="storeId" class="form-control">
+      <option value="">Select a store</option>
+      <option *ngFor="let store of sellerStores" [value]="store.id">
+        {{store.storeName}}
+      </option>
     </select>
-    <div class="error" *ngIf="productForm.get('storeId')?.touched && productForm.get('storeId')?.invalid">Store is required.</div>
   </div>
   <div>
     <label>Price:</label>

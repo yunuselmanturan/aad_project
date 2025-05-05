@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { Product }     from '../../catalogue/services/product.service';
@@ -8,9 +8,11 @@ import { Order }       from '../../checkout/services/order.service';
 
 export interface Store {
   id: number;
-  name: string;
-  description: string;
   sellerId: number;
+  sellerName: string;
+  storeName: string;  // Changed from 'name' to match backend
+  description: string;
+  createdAt: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,13 +25,20 @@ export class SellerService {
   /* ───────────── stores ───────────── */
 
   getSellerStores(): Observable<Store[]> {
-    return this.http.get<Store[]>(`${this.apiUrl}/seller/stores`);
+    return this.http.get<{data: Store[]}>(`${this.apiUrl}/seller/stores`)
+      .pipe(
+        map(response => {
+          console.log('Stores response:', response);
+          return response.data;
+        })
+      );
   }
 
   /* ───────────── products ──────────── */
 
   getSellerProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}/seller/products`);
+    return this.http.get<{data: Product[]}>(`${this.apiUrl}/seller/products`)
+      .pipe(map(response => response.data));
   }
 
   getProduct(id: number): Observable<Product> {
@@ -37,7 +46,8 @@ export class SellerService {
   }
 
   createProduct(body: any): Observable<Product> {
-    return this.http.post<Product>(`${this.apiUrl}/seller/products`, body);
+    return this.http.post<{data: Product}>(`${this.apiUrl}/seller/products`, body)
+      .pipe(map(response => response.data));
   }
 
   updateProduct(id: number, body: any): Observable<Product> {
@@ -46,6 +56,11 @@ export class SellerService {
 
   deleteProduct(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/seller/products/${id}`);
+  }
+
+  getAllCategories(): Observable<{[k: string]: any}[]> {
+    return this.http.get<{data: {[k: string]: any}[]}>(`${this.apiUrl}/categories`)
+      .pipe(map(response => response.data));
   }
 
   /* ───────────── orders ───────────── */

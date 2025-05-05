@@ -17,12 +17,14 @@ export class SellerProductFormComponent implements OnInit {
   error: string | null = null;
   loading: boolean = false;
   sellerStores: any[] = [];
+  categories: any[] = [];
 
   constructor(private fb: FormBuilder, private sellerService: SellerService, private route: ActivatedRoute, private router: Router, private notify: NotificationService) {}
 
   ngOnInit(): void {
     // Load seller's stores
     this.loadSellerStores();
+    this.loadCategories();
 
     // Initialize form fields
     this.productForm = this.fb.group({
@@ -140,6 +142,18 @@ export class SellerProductFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  loadCategories() {
+    this.sellerService.getAllCategories().subscribe({
+      next: (categories) => {
+        this.categories = Array.isArray(categories) ? categories : Object.values(categories);
+      },
+      error: (err) => {
+        console.error('Failed to load categories', err);
+        this.error = 'Could not load categories.';
+      }
+    });
   }
 
 

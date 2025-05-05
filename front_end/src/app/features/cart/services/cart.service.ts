@@ -9,8 +9,14 @@ import { AuthService } from '../../../core/services/auth.service';
 import { isPlatformBrowser } from '@angular/common';
 
 export interface CartItem {
-  id?: number;
-  product: Product;
+  id: number;
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    description?: string;
+    imageUrls?: string[];
+  };
   quantity: number;
 }
 
@@ -56,18 +62,39 @@ export class CartService {
   }
 
   private fetchCartFromApi(): void {
-    if (!this.isBrowser) {
-      return; // Skip API call on server
-    }
+    if (!this.isBrowser) return;
 
-    this.http.get<ApiResponse<CartItem[]>>(this.apiUrl)
-      .pipe(map(response => response.data))
+    this.http.get<ApiResponse<CartItem[]>>(`${this.apiUrl}`)
+      .pipe(
+        map(response => {
+          console.log('Raw API response:', response); // Debug log
+
+          if (!response?.data) {
+            console.warn('No data in response');
+            return [];
+          }
+
+          // Safely map the data with null checks
+          return response.data.map(item => ({
+            id: item?.id ?? 0,
+            product: {
+              id: item?.product?.id ?? 0,
+              name: item?.product?.name ?? 'Unknown Product',
+              price: item?.product?.price ?? 0,
+              imageUrls: [item?.product?.imageUrls?.[0] ?? '']
+            },
+            quantity: item?.quantity ?? 1
+          }));
+        })
+      )
       .subscribe({
         next: (items) => {
+          console.log('Processed cart items:', items); // Debug log
           this.itemsSubject.next(items);
         },
         error: (err) => {
           console.error('Error fetching cart:', err);
+          this.notificationService.showError('Failed to load cart items');
         }
       });
   }
@@ -82,36 +109,41 @@ export class CartService {
   }
 
   addItem(product: Product, quantity: number = 1): void {
-    if (!this.isBrowser) {
-      return; // Skip on server
-    }
+    if (!this.isBrowser) return;
 
     if (this.authService.isLoggedIn()) {
-      // If logged in, use API
       this.http.post<ApiResponse<CartItem>>(`${this.apiUrl}/add`, null, {
         params: { productId: product.id.toString(), quantity: quantity.toString() }
       })
       .pipe(map(response => response.data))
       .subscribe({
-        next: (cartItem) => {
+        next: () => {
           this.notificationService.showSuccess('Item added to cart');
-          this.fetchCartFromApi(); // Refresh the entire cart after adding
+          this.fetchCartFromApi();
         },
         error: (err) => {
-          this.notificationService.showError('Failed to add item to cart');
           console.error('Error adding to cart:', err);
+          this.notificationService.showError('Failed to add item to cart');
         }
       });
     } else {
-      // If not logged in, use local storage
-      const items = this.itemsSubject.value;
+      const items = [...this.itemsSubject.value];
       const idx = items.findIndex(it => it.product.id === product.id);
 
       if (idx >= 0) {
-        // If item already in cart, increase quantity
         items[idx].quantity += quantity;
       } else {
-        items.push({ product, quantity });
+        items.push({
+          id: Date.now(), // Temporary ID for local storage
+          product: {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            description: product.description,
+            imageUrls: product.imageUrls
+          },
+          quantity
+        });
       }
 
       this.updateLocalCart(items);
@@ -120,25 +152,21 @@ export class CartService {
   }
 
   removeItem(productId: number): void {
-    if (!this.isBrowser) {
-      return; // Skip on server
-    }
+    if (!this.isBrowser) return;
 
     if (this.authService.isLoggedIn()) {
-      // If logged in, use API
       this.http.delete<ApiResponse<null>>(`${this.apiUrl}/items/${productId}`)
         .subscribe({
           next: () => {
             this.notificationService.showSuccess('Item removed from cart');
-            this.fetchCartFromApi(); // Refresh the cart
+            this.fetchCartFromApi();
           },
           error: (err) => {
-            this.notificationService.showError('Failed to remove item from cart');
-            console.error('Error removing from cart:', err);
+            console.error('Error removing item:', err);
+            this.notificationService.showError('Failed to remove item');
           }
         });
     } else {
-      // If not logged in, use local storage
       let items = this.itemsSubject.value;
       items = items.filter(it => it.product.id !== productId);
       this.updateLocalCart(items);
@@ -147,9 +175,7 @@ export class CartService {
   }
 
   updateQuantity(productId: number, quantity: number): void {
-    if (!this.isBrowser) {
-      return; // Skip on server
-    }
+    if (!this.isBrowser) return;
 
     if (quantity <= 0) {
       this.removeItem(productId);
@@ -157,31 +183,24 @@ export class CartService {
     }
 
     if (this.authService.isLoggedIn()) {
-      // For logged-in users, we'll need an endpoint like PUT /api/cart/items/{id}
-      // If it doesn't exist yet, we can use addToCart with the updated quantity
-      this.http.post<ApiResponse<CartItem>>(`${this.apiUrl}/add`, null, {
-        params: { productId: productId.toString(), quantity: quantity.toString() }
-      })
-      .pipe(map(response => response.data))
-      .subscribe({
-        next: () => {
-          this.notificationService.showSuccess('Cart updated');
-          this.fetchCartFromApi();
-        },
-        error: (err) => {
-          this.notificationService.showError('Failed to update cart');
-          console.error('Error updating cart:', err);
-        }
-      });
+      this.http.put<ApiResponse<CartItem>>(`${this.apiUrl}/items/${productId}`, { quantity })
+        .pipe(map(response => response.data))
+        .subscribe({
+          next: () => {
+            this.fetchCartFromApi();
+            this.notificationService.showSuccess('Cart updated');
+          },
+          error: (err) => {
+            console.error('Error updating cart:', err);
+            this.notificationService.showError('Failed to update cart');
+          }
+        });
     } else {
-      // For non-logged in users, update in local storage
-      const items = this.itemsSubject.value;
+      const items = [...this.itemsSubject.value];
       const idx = items.findIndex(it => it.product.id === productId);
-
       if (idx >= 0) {
         items[idx].quantity = quantity;
         this.updateLocalCart(items);
-        this.notificationService.showSuccess('Cart updated');
       }
     }
   }
@@ -231,7 +250,17 @@ export class CartService {
     if (localCart.length > 0) {
       // Add each local item to the server cart
       localCart.forEach((item: CartItem) => {
-        this.addItem(item.product, item.quantity);
+        const product: Product = {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          imageUrls: item.product.imageUrls || [],
+          description: '', // Default description
+          stockQuantity: 0, // Default stock quantity
+          storeId: 0,       // Default store id
+          categoryId: 0     // Default category id
+        };
+        this.addItem(product, item.quantity);
       });
 
       // Clear local storage cart after merging
@@ -242,3 +271,5 @@ export class CartService {
     this.fetchCartFromApi();
   }
 }
+
+
