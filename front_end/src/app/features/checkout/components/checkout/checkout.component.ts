@@ -8,6 +8,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { Address } from '../../../auth/components/user-profile/user-profile.component';
 import { AddressService } from '../../../../core/services/address.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { PaymentService } from '../../services/payment.service';
+import { NotificationService as MessageService } from '../../../../core/services/notification.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-checkout',
@@ -25,6 +28,9 @@ export class CheckoutComponent implements OnInit {
   useExistingAddress: boolean = true;
   showAddressForm: boolean = false;
 
+  order: any;
+  isProcessingPayment = false;
+
   get isLoggedIn(): boolean {
     return !!this.authService.currentUserSubject.value;
   }
@@ -36,7 +42,9 @@ export class CheckoutComponent implements OnInit {
     private addressService: AddressService,
     private router: Router,
     private authService: AuthService,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private paymentService: PaymentService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -168,10 +176,11 @@ export class CheckoutComponent implements OnInit {
   private createOrder(shippingInfo: any): void {
     this.orderService.createOrder(shippingInfo, this.cartItems).subscribe({
       next: (order) => {
-        this.cartService.clearCart();
-        this.router.navigate(['/checkout/success'], {
-          queryParams: { orderId: order.id }
-        });
+        // Store the order in the component
+        this.order = order;
+
+        // Instead of navigating away, process the payment
+        this.processPayment();
       },
       error: (err) => {
         console.error('Order creation failed:', err);
@@ -204,6 +213,101 @@ export class CheckoutComponent implements OnInit {
   }
 
   calculateTotal(): number {
-    return this.cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }
+
+  async processPayment() {
+    if (!this.order) {
+      console.error('No order to process payment for');
+      return;
+    }
+
+    if (this.isProcessingPayment) {
+      console.log('Payment is already processing');
+      return;
+    }
+
+    try {
+      this.isProcessingPayment = true;
+
+      // Log the order structure to see what's available
+      console.log('Order data for payment processing:', this.order);
+
+      // Create the payment intent using firstValueFrom instead of toPromise
+      // Ensure we're explicitly passing an orderId that exists
+      const orderId = this.order.id || this.order.data?.id;
+      console.log('Using orderId for payment:', orderId);
+
+      if (!orderId) {
+        throw new Error('Cannot process payment: Order ID is missing');
+      }
+
+      const clientSecret = await firstValueFrom(this.paymentService.createPaymentIntent(orderId))
+        .catch(error => {
+          // Handle case where payment intent already exists
+          if (error?.error?.message === "Payment already created for this order") {
+            this.messageService.showInfo('Payment process already started for this order');
+            // Since payment was already created, consider it in process
+            this.cartService.clearCart();
+            this.router.navigate(['/orders']);
+            return null;
+          }
+          throw error; // Rethrow if it's a different error
+        });
+
+      // If we caught the duplicate payment error above, exit early
+      if (!clientSecret) return;
+
+      // Create payment form element
+      const paymentFormContainer = document.getElementById('payment-form-container');
+      if (!paymentFormContainer) {
+        throw new Error('Payment form container not found');
+      }
+
+      // Clear any existing contents
+      paymentFormContainer.innerHTML = '<div id="payment-element"></div>';
+
+      // Create and mount the payment form
+      const { elements } = await this.paymentService.createPaymentForm(clientSecret, 'payment-element');
+
+      // Process the payment
+      const { error, paymentIntent } = await this.paymentService.handlePaymentSubmission(elements, orderId);
+
+      if (error) {
+        console.error('Payment failed:', error);
+        this.messageService.showError('Payment failed: ' + (error.message || 'Unknown error'));
+        this.isProcessingPayment = false;
+        return;
+      }
+
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Payment was successful - clear the cart and redirect
+        this.cartService.clearCart();
+
+        // Additional attempt to confirm the payment
+        try {
+          console.log('Additional payment confirmation attempt before redirecting');
+          await firstValueFrom(this.paymentService.confirmPayment(paymentIntent.id));
+        } catch (err) {
+          console.error('Additional confirmation attempt failed:', err);
+          // Continue with redirect anyway since payment succeeded on Stripe's side
+        }
+
+        this.router.navigate(['/checkout/success'], {
+          queryParams: { orderId: orderId }
+        });
+      } else if (paymentIntent) {
+        // Payment requires additional actions, handle accordingly
+        console.log('Payment status:', paymentIntent.status);
+        this.messageService.showInfo('Payment is processing. You will be notified when it completes.');
+        this.cartService.clearCart();  // Clear cart since order is being processed
+        this.router.navigate(['/orders']);
+      }
+    } catch (err: any) {
+      console.error('Payment processing error:', err);
+      this.messageService.showError('Payment processing error: ' + (err.message || 'Unknown error'));
+    } finally {
+      this.isProcessingPayment = false;
+    }
   }
 }

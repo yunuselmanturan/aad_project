@@ -66,11 +66,13 @@ export class SellerService {
   /* ───────────── orders ───────────── */
 
   getSellerOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/seller/orders`);
+    return this.http.get<{data: Order[]}>(`${this.apiUrl}/seller/orders`)
+      .pipe(map(response => response.data || []));
   }
 
   markOrderShipped(orderId: number, body: any): Observable<Order> {
-    return this.http.put<Order>(`${this.apiUrl}/seller/orders/${orderId}/ship`, body);
+    return this.http.put<{data: Order}>(`${this.apiUrl}/seller/orders/${orderId}/ship`, body)
+      .pipe(map(response => response.data));
   }
 
   /* ───────────── analytics ─────────── */

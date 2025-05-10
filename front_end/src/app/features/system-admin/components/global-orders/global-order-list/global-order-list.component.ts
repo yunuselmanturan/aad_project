@@ -7,7 +7,8 @@ import { Component, OnInit } from '@angular/core';
 @Component({
   selector: 'app-global-order-list',
   standalone: false,
-  templateUrl: './global-order-list.component.html'
+  templateUrl: './global-order-list.component.html',
+  styleUrls: ['./global-order-list.component.css']
 })
 export class GlobalOrderListComponent implements OnInit {
   orders: Order[] = [];
@@ -17,6 +18,11 @@ export class GlobalOrderListComponent implements OnInit {
   constructor(private adminService: AdminService, private notify: NotificationService) {}
 
   ngOnInit(): void {
+    this.loadOrders();
+  }
+
+  loadOrders(): void {
+    this.loading = true;
     this.adminService.getAllOrders().subscribe({
       next: orders => {
         this.orders = orders;

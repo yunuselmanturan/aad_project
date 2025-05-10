@@ -26,10 +26,15 @@ const routes: Routes = [
                       .then(m => m.SellerDashboardModule)
   },
   {
-    path: 'system-admin',
-    canLoad: [/*AuthGuard, SystemAdminGuard*/],
+    path: 'admin',
+    canActivate: [/*AuthGuard, SystemAdminGuard*/],
     loadChildren: () => import('./features/system-admin/system-admin.module')
                       .then(m => m.SystemAdminModule)
+  },
+  {
+    path: 'system-admin',
+    redirectTo: 'admin',
+    pathMatch: 'full'
   },
 
   { path: '**', component: NotFoundComponent }

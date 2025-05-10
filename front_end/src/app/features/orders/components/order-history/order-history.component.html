@@ -7,7 +7,7 @@
   <tr *ngFor="let order of orders" (click)="viewOrder(order)" class="clickable">
     <td>{{ order.id }}</td>
     <td>{{ order.orderDate | date:'short' }}</td>
-    <td>{{ order.totalPrice | money }}</td>
+    <td>{{ order.totalAmount | money }}</td>
     <td>{{ order.status }}</td>
   </tr>
 </table>

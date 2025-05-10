@@ -10,13 +10,10 @@ import { isPlatformBrowser } from '@angular/common';
 
 export interface CartItem {
   id: number;
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    description?: string;
-    imageUrls?: string[];
-  };
+  productId: number;
+  productName: string;
+  price: number;
+  imageUrl?: string;
   quantity: number;
 }
 
@@ -50,8 +47,10 @@ export class CartService {
     }
 
     if (this.authService.isLoggedIn()) {
-      // If logged in, fetch from API
+      // If logged in, fetch from API and don't use local storage
       this.fetchCartFromApi();
+      // Clear any local storage cart to prevent duplication
+      localStorage.removeItem('cart-items');
     } else {
       // If not logged in, load from local storage
       const saved = localStorage.getItem('cart-items');
@@ -62,39 +61,33 @@ export class CartService {
   }
 
   private fetchCartFromApi(): void {
-    if (!this.isBrowser) return;
-
     this.http.get<ApiResponse<CartItem[]>>(`${this.apiUrl}`)
       .pipe(
-        map(response => {
-          console.log('Raw API response:', response); // Debug log
+        map(res => res.data ?? []),
+        map(apiItems =>
+          apiItems.map<CartItem>(i => ({
+            id: i.id,
+            productId: i.productId,
+            productName: i.productName,
+            price: i.price,
+            imageUrl: i.imageUrl,
+            quantity: i.quantity
+          }))
+        ),
+        tap(items => {
+          // Just update the state, don't save to localStorage when logged in
+          this.itemsSubject.next(items);
 
-          if (!response?.data) {
-            console.warn('No data in response');
-            return [];
+          // Only store in localStorage if not logged in (for backup)
+          if (!this.authService.isLoggedIn()) {
+            localStorage.setItem('cart-items', JSON.stringify(items));
           }
-
-          // Safely map the data with null checks
-          return response.data.map(item => ({
-            id: item?.id ?? 0,
-            product: {
-              id: item?.product?.id ?? 0,
-              name: item?.product?.name ?? 'Unknown Product',
-              price: item?.product?.price ?? 0,
-              imageUrls: [item?.product?.imageUrls?.[0] ?? '']
-            },
-            quantity: item?.quantity ?? 1
-          }));
         })
       )
       .subscribe({
-        next: (items) => {
-          console.log('Processed cart items:', items); // Debug log
-          this.itemsSubject.next(items);
-        },
-        error: (err) => {
-          console.error('Error fetching cart:', err);
-          this.notificationService.showError('Failed to load cart items');
+        error: err => {
+          console.error(err);
+          this.notificationService.showError('Cart could not be loaded');
         }
       });
   }
@@ -128,20 +121,17 @@ export class CartService {
       });
     } else {
       const items = [...this.itemsSubject.value];
-      const idx = items.findIndex(it => it.product.id === product.id);
+      const idx = items.findIndex(it => it.productId === product.id);
 
       if (idx >= 0) {
         items[idx].quantity += quantity;
       } else {
         items.push({
           id: Date.now(), // Temporary ID for local storage
-          product: {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            description: product.description,
-            imageUrls: product.imageUrls
-          },
+          productId: product.id,
+          productName: product.name,
+          price: product.price,
+          imageUrl: product.imageUrls?.[0],
           quantity
         });
       }
@@ -164,7 +154,13 @@ export class CartService {
           },
           error: (err) => {
             console.error('Error removing item:', err);
-            this.notificationService.showError('Failed to remove item');
+            // If it's a 404 error, the item is already gone, so treat it as a success
+            if (err.status === 404) {
+              this.notificationService.showInfo('Item was already removed');
+              this.fetchCartFromApi(); // Refresh the cart to ensure UI is in sync
+            } else {
+              this.notificationService.showError('Failed to remove item');
+            }
           }
         });
     } else {
@@ -252,27 +248,69 @@ export class CartService {
     const localCart = JSON.parse(localStorage.getItem('cart-items') || '[]');
 
     if (localCart.length > 0) {
-      // Add each local item to the server cart
-      localCart.forEach((item: CartItem) => {
-        const product: Product = {
-          id: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
-          imageUrls: item.product.imageUrls || [],
-          description: '', // Default description
-          stockQuantity: 0, // Default stock quantity
-          storeId: 0,       // Default store id
-          categoryId: 0     // Default category id
-        };
-        this.addItem(product, item.quantity);
-      });
+      // First, fetch the current server cart
+      this.http.get<ApiResponse<CartItem[]>>(`${this.apiUrl}`)
+        .pipe(
+          map(res => res.data ?? [])
+        )
+        .subscribe(serverCartItems => {
+          // Create a map of product IDs that are already in the server cart
+          const existingProductIds = new Set(serverCartItems.map(item => item.productId));
 
-      // Clear local storage cart after merging
-      localStorage.removeItem('cart-items');
+          // Process each local item
+          const processItem = (index: number) => {
+            if (index >= localCart.length) {
+              // All items processed, clear local storage and fetch updated cart
+              localStorage.removeItem('cart-items');
+              this.fetchCartFromApi();
+              return;
+            }
+
+            const item = localCart[index];
+
+            // Check if the product is already in the server cart
+            if (existingProductIds.has(item.productId)) {
+              // Skip this item and move to the next
+              processItem(index + 1);
+              return;
+            }
+
+            // Add the item to the server cart
+            const product: Product = {
+              id: item.productId,
+              name: item.productName,
+              price: item.price,
+              imageUrls: item.imageUrl ? [item.imageUrl] : [],
+              description: '', // Default description
+              stockQuantity: 0, // Default stock quantity
+              storeId: 0,       // Default store id
+              categoryId: 0     // Default category id
+            };
+
+            this.http.post<ApiResponse<CartItem>>(`${this.apiUrl}/add`, null, {
+              params: {
+                productId: product.id.toString(),
+                quantity: item.quantity.toString()
+              }
+            }).subscribe({
+              next: () => {
+                // Process next item
+                processItem(index + 1);
+              },
+              error: () => {
+                // On error, still try to process the next item
+                processItem(index + 1);
+              }
+            });
+          };
+
+          // Start processing items
+          processItem(0);
+        });
+    } else {
+      // No local items to merge, just fetch the server cart
+      this.fetchCartFromApi();
     }
-
-    // Fetch the updated cart from server
-    this.fetchCartFromApi();
   }
 }
 

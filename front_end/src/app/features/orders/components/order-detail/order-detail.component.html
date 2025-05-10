@@ -9,7 +9,7 @@
       Product #{{ item.productId }} - Qty: {{ item.quantity }} - Subtotal: {{ item.price * item.quantity | money }}
     </li>
   </ul>
-  <p><strong>Total: {{ order.totalPrice | money }}</strong></p>
+  <p><strong>Total: {{ order.totalAmount | money }}</strong></p>
   <div *ngIf="order.shippingAddress">
     <h3>Shipping Information:</h3>
     <p>{{ order.shippingAddress.fullName }}</p>

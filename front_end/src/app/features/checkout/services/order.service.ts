@@ -4,15 +4,35 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CartItem } from '../../cart/services/cart.service';
+import { map } from 'rxjs/operators';
+
+export interface OrderItem {
+  id: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+  storeName: string;
+  storeId: number;
+  imageUrl: string;
+}
 
 export interface Order {
   id: number;
-  items: { productId: number, quantity: number, price: number }[];
-  totalPrice: number;
+  items: OrderItem[];
+  totalAmount: number;
   status: string;       // e.g., 'PENDING_PAYMENT', 'PAID', 'SHIPPED', etc.
-  shippingAddress: any; // could be an address object with fields
-  userId: number;
+  shippingAddress?: any; // could be an address object with fields
+  userId?: number;
+  userEmail: string;
   orderDate: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,20 +43,22 @@ export class OrderService {
   createOrder(shippingInfo: any, cartItems: CartItem[]): Observable<Order> {
     // Transform cart items into the structure expected by backend (productId & quantity)
     const orderItems = cartItems.map(it => ({
-      productId: it.product.id,
+      productId: it.productId,
       quantity: it.quantity,
-      price: it.product.price
+      price: it.price
     }));
     const payload = { shippingAddress: shippingInfo, items: orderItems };
-    return this.http.post<Order>(`${this.apiUrl}/orders`, payload);
+    return this.http.post<ApiResponse<Order>>(`${this.apiUrl}/orders`, payload)
+      .pipe(map(response => response.data));
   }
 
   getOrder(orderId: number): Observable<Order> {
-    return this.http.get<Order>(`${this.apiUrl}/orders/${orderId}`);
+    return this.http.get<ApiResponse<Order>>(`${this.apiUrl}/orders/${orderId}`)
+      .pipe(map(response => response.data));
   }
 
   getUserOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/orders`);
-    // Assuming this returns only orders for the current logged-in user
+    return this.http.get<ApiResponse<Order[]>>(`${this.apiUrl}/orders`)
+      .pipe(map(response => response.data || []));
   }
 }

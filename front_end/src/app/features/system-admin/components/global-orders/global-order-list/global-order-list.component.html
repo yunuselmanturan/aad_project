@@ -3,16 +3,33 @@
 <app-loading-spinner *ngIf="loading"></app-loading-spinner>
 <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
 <table *ngIf="!loading && orders.length" class="order-table">
-  <tr><th>Order #</th><th>User ID</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr>
-  <tr *ngFor="let o of orders">
-    <td>{{ o.id }}</td>
-    <td>{{ o.userId }}</td>
-    <td>{{ o.orderDate | date:'short' }}</td>
-    <td>{{ o.totalPrice | money }}</td>
-    <td>{{ o.status }}</td>
-    <td>
-      <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'DELIVERED'" (click)="cancelOrder(o)">Cancel</button>
-    </td>
-  </tr>
+  <thead>
+    <tr>
+      <th></th>
+      <th>User</th>
+      <th>Products</th>
+      <th>Date</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let o of orders">
+      <td>{{ o.id }}</td>
+      <td>{{ o.userEmail }}</td>
+      <td>
+        <div *ngFor="let item of o.items">
+          {{ item.quantity }}x {{ item.productName }} ({{ item.storeName }})
+        </div>
+      </td>
+      <td>{{ o.orderDate | date:'short' }}</td>
+      <td>{{ o.totalAmount | currency }}</td>
+      <td>{{ o.status }}</td>
+      <td>
+        <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'DELIVERED'" (click)="cancelOrder(o)">Cancel</button>
+      </td>
+    </tr>
+  </tbody>
 </table>
 <p *ngIf="!loading && !orders.length">No orders found.</p>

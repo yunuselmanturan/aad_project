@@ -6,7 +6,8 @@
     <p>You're currently checking out as a guest. <a routerLink="/auth/login" [queryParams]="{returnUrl: '/checkout'}">Log in</a> to use your saved addresses and payment methods.</p>
   </div>
 
-  <div class="row">
+  <!-- Address and Order Summary Section - Hidden after order creation -->
+  <div class="row" *ngIf="!order">
     <div class="col-md-8">
       <div class="card mb-4">
         <div class="card-header">
@@ -119,10 +120,9 @@
           <ul class="list-group mb-3">
             <li *ngFor="let item of cartItems" class="list-group-item d-flex justify-content-between lh-sm">
               <div>
-                <h6 class="my-0">{{ item.product.name }} (x{{ item.quantity }})</h6>
-                <small class="text-muted">{{ item.product.description | slice:0:50 }}...</small>
+                <h6 class="my-0">{{ item.productName }} (x{{ item.quantity }})</h6>
               </div>
-              <span class="text-muted">{{ item.product.price * item.quantity | currency }}</span>
+              <span class="text-muted">{{ item.price * item.quantity | currency }}</span>
             </li>
             <li class="list-group-item d-flex justify-content-between">
               <span>Total</span>
@@ -133,12 +133,51 @@
           <button
             (click)="onSubmit()"
             class="btn btn-primary w-100"
-            [disabled]="cartItems.length === 0">
+            [disabled]="cartItems.length === 0 || isProcessingPayment">
             Continue to Payment
           </button>
 
           <div *ngIf="error" class="alert alert-danger mt-3">
             {{ error }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Section - Shown only after order creation -->
+  <div class="checkout-section payment-section" *ngIf="order">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h3>Payment Information</h3>
+          </div>
+          <div class="card-body">
+            <p>Please complete your payment to finalize order #{{order.id}}</p>
+            <div id="payment-form-container" class="payment-form-container mb-3">
+              <div id="payment-element"></div>
+            </div>
+
+            <div class="submit-section">
+              <button class="btn btn-success w-100" [disabled]="isProcessingPayment" (click)="processPayment()">
+                <span *ngIf="!isProcessingPayment">Complete Payment</span>
+                <span *ngIf="isProcessingPayment">Processing...</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="mb-0">Order Details</h3>
+          </div>
+          <div class="card-body">
+            <p><strong>Order #:</strong> {{order.id}}</p>
+            <p><strong>Amount:</strong> {{order.totalAmount | currency}}</p>
+            <p><strong>Date:</strong> {{order.orderDate | date:'medium'}}</p>
           </div>
         </div>
       </div>

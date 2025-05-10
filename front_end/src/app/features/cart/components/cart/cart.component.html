@@ -5,12 +5,12 @@
     <div class="cart-items">
       <div class="cart-item" *ngFor="let item of cartItems">
         <div class="item-details">
-          <img [src]="item.product.imageUrls?.[0] || 'assets/placeholder.png'"
-               [alt]="item.product.name"
+          <img [src]="item.imageUrl || 'assets/placeholder.png'"
+               [alt]="item.productName"
                class="item-image">
           <div class="item-info">
-            <h3>{{ item.product.name }}</h3>
-            <p>Price: {{ item.product.price | currency }}</p>
+            <h3>{{ item.productName }}</h3>
+            <p>Price: {{ item.price | currency }}</p>
           </div>
         </div>
 

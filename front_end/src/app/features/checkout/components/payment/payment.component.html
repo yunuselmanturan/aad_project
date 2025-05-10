@@ -59,14 +59,6 @@
             <form [formGroup]="paymentForm">
               <div formGroupName="newPayment" class="row">
                 <div class="col-md-12 mb-3">
-                  <label for="cardNumber" class="form-label">Card Number</label>
-                  <input id="cardNumber" formControlName="cardNumber" type="text" class="form-control" placeholder="1234567890123456">
-                  <div *ngIf="paymentForm.get('newPayment.cardNumber')?.invalid && paymentForm.get('newPayment.cardNumber')?.touched" class="text-danger">
-                    Please enter a valid 16-digit card number.
-                  </div>
-                </div>
-
-                <div class="col-md-12 mb-3">
                   <label for="cardholderName" class="form-label">Cardholder Name</label>
                   <input id="cardholderName" formControlName="cardholderName" type="text" class="form-control">
                   <div *ngIf="paymentForm.get('newPayment.cardholderName')?.invalid && paymentForm.get('newPayment.cardholderName')?.touched" class="text-danger">
@@ -74,34 +66,13 @@
                   </div>
                 </div>
 
-                <div class="col-md-4 mb-3">
-                  <label for="expiryMonth" class="form-label">Expiry Month</label>
-                  <select id="expiryMonth" formControlName="expiryMonth" class="form-select">
-                    <option value="">Month</option>
-                    <option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="month">{{ month }}</option>
-                  </select>
-                  <div *ngIf="paymentForm.get('newPayment.expiryMonth')?.invalid && paymentForm.get('newPayment.expiryMonth')?.touched" class="text-danger">
-                    Required.
-                  </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                  <label for="expiryYear" class="form-label">Expiry Year</label>
-                  <select id="expiryYear" formControlName="expiryYear" class="form-select">
-                    <option value="">Year</option>
-                    <option *ngFor="let year of [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030]" [value]="year">{{ year }}</option>
-                  </select>
-                  <div *ngIf="paymentForm.get('newPayment.expiryYear')?.invalid && paymentForm.get('newPayment.expiryYear')?.touched" class="text-danger">
-                    Required.
-                  </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                  <label for="cvv" class="form-label">CVV</label>
-                  <input id="cvv" formControlName="cvv" type="text" class="form-control" placeholder="123">
-                  <div *ngIf="paymentForm.get('newPayment.cvv')?.invalid && paymentForm.get('newPayment.cvv')?.touched" class="text-danger">
-                    3-4 digits required.
-                  </div>
+                <!-- Stripe Card Element -->
+                <div class="col-md-12 mb-4">
+                  <label class="form-label">Card details</label>
+                  <!-- ↓ Stripe Elements kart alanı -->
+                  <div id="card-element" #cardElement class="form-control py-3 px-3" style="min-height: 44px;"></div>
+                  <!-- hata bölgesi -->
+                  <div id="card-errors" class="text-danger mt-2" role="alert"></div>
                 </div>
 
                 <!-- Option to save this payment method (only for logged in users) -->

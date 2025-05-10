@@ -61,7 +61,7 @@ export class OrderService {
     const orderData: CreateOrderRequest = {
       ...(shippingInfo.addressId ? { addressId: shippingInfo.addressId } : { address: shippingInfo.address }),
       items: cartItems.map(item => ({
-        productId: item.product.id,
+        productId: item.productId,
         quantity: item.quantity
       }))
     };

@@ -1,6 +1,9 @@
 // features/checkout/components/order-success/order-success.component.ts
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { PaymentService } from '../../services/payment.service';
+import { OrderService } from '../../services/order.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-order-success',
@@ -9,6 +12,7 @@ import { Router } from '@angular/router';
     <div class="success">
       <h2>Thank you!</h2>
       <p>Your order has been placed successfully.</p>
+      <p *ngIf="orderId">Order #: {{orderId}}</p>
       <a routerLink="/orders">View My Orders</a>
     </div>
   `,
@@ -17,7 +21,36 @@ import { Router } from '@angular/router';
     .success h2 { color: #4caf50; }
   `]
 })
-export class OrderSuccessComponent {
-  // In a more advanced version, you might display order details or number here,
-  // possibly by retrieving the last order from an OrderService or passing via state.
+export class OrderSuccessComponent implements OnInit {
+  orderId: number | null = null;
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private paymentService: PaymentService,
+    private orderService: OrderService,
+    private notificationService: NotificationService
+  ) {}
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['orderId']) {
+        this.orderId = +params['orderId'];
+        this.ensureTransaction(this.orderId);
+      }
+    });
+  }
+
+  ensureTransaction(orderId: number) {
+    console.log(`Ensuring transaction for order ${orderId}`);
+    this.paymentService.ensureTransaction(orderId).subscribe({
+      next: result => {
+        console.log('Transaction verification result:', result);
+      },
+      error: err => {
+        console.error('Failed to verify transaction:', err);
+        // Don't show error to user since this is a background operation
+      }
+    });
+  }
 }
