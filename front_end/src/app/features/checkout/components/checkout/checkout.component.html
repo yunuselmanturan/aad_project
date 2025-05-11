@@ -155,16 +155,19 @@
           </div>
           <div class="card-body">
             <p>Please complete your payment to finalize order #{{order.id}}</p>
-            <div id="payment-form-container" class="payment-form-container mb-3">
-              <div id="payment-element"></div>
-            </div>
+            <form id="payment-form">
+              <div id="payment-form-container" class="payment-form-container mb-3">
+                <div id="payment-element"></div>
+              </div>
+              <div id="payment-errors" class="text-danger mb-3" role="alert"></div>
 
-            <div class="submit-section">
-              <button class="btn btn-success w-100" [disabled]="isProcessingPayment" (click)="processPayment()">
-                <span *ngIf="!isProcessingPayment">Complete Payment</span>
-                <span *ngIf="isProcessingPayment">Processing...</span>
-              </button>
-            </div>
+              <div class="submit-section">
+                <button type="submit" class="btn btn-success w-100" [disabled]="isProcessingPayment">
+                  <span *ngIf="!isProcessingPayment">Complete Payment</span>
+                  <span *ngIf="isProcessingPayment">Processing...</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

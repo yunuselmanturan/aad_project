@@ -22,6 +22,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   status: string;       // e.g., 'PENDING_PAYMENT', 'PAID', 'SHIPPED', etc.
+  shipmentStatus: string; // e.g., 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'
   shippingAddress?: any; // could be an address object with fields
   userId?: number;
   userEmail: string;

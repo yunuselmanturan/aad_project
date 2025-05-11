@@ -79,6 +79,15 @@ export class CheckoutComponent implements OnInit {
       this.useExistingAddress = false;
       this.showAddressForm = true;
     }
+
+    // Check if there's an existing order in the component
+    // This happens when returning to this component after order creation
+    if (this.order) {
+      // Initialize the payment form if there's already an order
+      setTimeout(() => {
+        this.processPayment();
+      }, 500);
+    }
   }
 
   get f() { return this.checkoutForm.controls; }
@@ -270,39 +279,92 @@ export class CheckoutComponent implements OnInit {
       // Create and mount the payment form
       const { elements } = await this.paymentService.createPaymentForm(clientSecret, 'payment-element');
 
-      // Process the payment
-      const { error, paymentIntent } = await this.paymentService.handlePaymentSubmission(elements, orderId);
-
-      if (error) {
-        console.error('Payment failed:', error);
-        this.messageService.showError('Payment failed: ' + (error.message || 'Unknown error'));
-        this.isProcessingPayment = false;
-        return;
+      // Get the form and attach a submit handler
+      const form = document.getElementById('payment-form') as HTMLFormElement;
+      if (!form) {
+        throw new Error('Payment form not found');
       }
 
-      if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Payment was successful - clear the cart and redirect
-        this.cartService.clearCart();
+      // Setup error display element
+      const errorDisplay = document.getElementById('payment-errors');
 
-        // Additional attempt to confirm the payment
-        try {
-          console.log('Additional payment confirmation attempt before redirecting');
-          await firstValueFrom(this.paymentService.confirmPayment(paymentIntent.id));
-        } catch (err) {
-          console.error('Additional confirmation attempt failed:', err);
-          // Continue with redirect anyway since payment succeeded on Stripe's side
+      // Set up the form submit handler
+      form.addEventListener('submit', async (event) => {
+        // Prevent the default form submission
+        event.preventDefault();
+
+        if (this.isProcessingPayment) {
+          return;
         }
 
-        this.router.navigate(['/checkout/success'], {
-          queryParams: { orderId: orderId }
+        this.isProcessingPayment = true;
+
+        // Get the payment submission button and disable it
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+          submitButton.setAttribute('disabled', 'true');
+        }
+
+        // Clear any previous errors
+        if (errorDisplay) {
+          errorDisplay.textContent = '';
+        }
+
+        const stripe = await this.paymentService.getStripe();
+
+        // Process the payment
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/checkout/success?orderId=${orderId}`,
+          },
+          redirect: 'if_required'
         });
-      } else if (paymentIntent) {
-        // Payment requires additional actions, handle accordingly
-        console.log('Payment status:', paymentIntent.status);
-        this.messageService.showInfo('Payment is processing. You will be notified when it completes.');
-        this.cartService.clearCart();  // Clear cart since order is being processed
-        this.router.navigate(['/orders']);
-      }
+
+        if (error) {
+          console.error('Payment failed:', error);
+
+          // Display the error message
+          if (errorDisplay) {
+            errorDisplay.textContent = error.message || 'An error occurred during payment.';
+          }
+
+          this.messageService.showError('Payment failed: ' + (error.message || 'Unknown error'));
+
+          // Re-enable the submit button
+          if (submitButton) {
+            submitButton.removeAttribute('disabled');
+          }
+
+          this.isProcessingPayment = false;
+          return;
+        }
+
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          // Payment was successful - clear the cart and redirect
+          this.cartService.clearCart();
+
+          // Additional attempt to confirm the payment
+          try {
+            console.log('Additional payment confirmation attempt before redirecting');
+            await firstValueFrom(this.paymentService.confirmPayment(paymentIntent.id));
+          } catch (err) {
+            console.error('Additional confirmation attempt failed:', err);
+            // Continue with redirect anyway since payment succeeded on Stripe's side
+          }
+
+          this.router.navigate(['/checkout/success'], {
+            queryParams: { orderId: orderId }
+          });
+        } else if (paymentIntent) {
+          // Payment requires additional actions, handle accordingly
+          console.log('Payment status:', paymentIntent.status);
+          this.messageService.showInfo('Payment is processing. You will be notified when it completes.');
+          this.cartService.clearCart();  // Clear cart since order is being processed
+          this.router.navigate(['/orders']);
+        }
+      });
+
     } catch (err: any) {
       console.error('Payment processing error:', err);
       this.messageService.showError('Payment processing error: ' + (err.message || 'Unknown error'));

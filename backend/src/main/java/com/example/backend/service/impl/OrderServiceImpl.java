@@ -266,6 +266,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setOrderDate(o.getOrderDate());
         dto.setTotalAmount(o.getTotalAmount());
         dto.setStatus(o.getShipmentStatus());
+        dto.setShipmentStatus(o.getShipmentStatus());
         dto.setUserEmail(o.getUser().getEmail());
         dto.setItems(o.getItems().stream()
                       .map(this::mapOrderItemToDTO)

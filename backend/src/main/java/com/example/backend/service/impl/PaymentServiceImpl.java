@@ -92,11 +92,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .setCurrency("usd")
                     .setDescription("Payment for Order #" + orderId)
                     .setReceiptEmail(order.getUser().getEmail())
-                    .setAutomaticPaymentMethods(
-                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                            .setEnabled(true)
-                            .build()
-                    )
+                    .addPaymentMethodType("card")
                     .build();
             
             PaymentIntent intent = PaymentIntent.create(params);

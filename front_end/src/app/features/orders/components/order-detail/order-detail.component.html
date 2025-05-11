@@ -2,7 +2,28 @@
 <div *ngIf="order; else errorOrLoading">
   <h2>Order #{{ order.id }}</h2>
   <p>Date: {{ order.orderDate | date:'fullDate' }}</p>
-  <p>Status: {{ order.status }}</p>
+  <div class="order-status-container mb-4">
+    <div class="row">
+      <div class="col-md-6">
+        <p>Payment Status: <span class="badge bg-secondary">{{ order.status }}</span></p>
+      </div>
+      <div class="col-md-6">
+        <p>Shipment Status:
+          <span
+            [ngClass]="{
+              'badge bg-warning': order.shipmentStatus === 'PENDING',
+              'badge bg-info': order.shipmentStatus === 'CONFIRMED',
+              'badge bg-primary': order.shipmentStatus === 'SHIPPED',
+              'badge bg-success': order.shipmentStatus === 'DELIVERED',
+              'badge bg-danger': order.shipmentStatus === 'CANCELLED'
+            }">
+            {{ order.shipmentStatus }}
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
   <h3>Items:</h3>
   <ul>
     <li *ngFor="let item of order.items">
@@ -15,11 +36,17 @@
     <p>{{ order.shippingAddress.fullName }}</p>
     <p>{{ order.shippingAddress.address }}, {{ order.shippingAddress.city }}, {{ order.shippingAddress.postalCode }}, {{ order.shippingAddress.country }}</p>
   </div>
-  <!-- If order.status indicates shipped and maybe there's tracking info, display it -->
-  <div *ngIf="order.status && order.status.includes('SHIPPED')">
+
+  <!-- Display tracking info or delivery status based on shipment status -->
+  <div *ngIf="order.shipmentStatus === 'SHIPPED'">
     <p>Your order has been shipped. It will arrive soon.</p>
   </div>
-  <!-- If delivered and not reviewed, we could encourage review (not implemented) -->
+  <div *ngIf="order.shipmentStatus === 'DELIVERED'">
+    <p>Your order has been delivered.</p>
+  </div>
+  <div *ngIf="order.shipmentStatus === 'CANCELLED'">
+    <p>This order has been cancelled.</p>
+  </div>
 </div>
 <ng-template #errorOrLoading>
   <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
