@@ -1,5 +1,5 @@
 <!-- features/system-admin/components/users/user-list/user-list.component.html -->
-<h2>All Users</h2>
+<h2>Customer Accounts</h2>
 <app-loading-spinner *ngIf="loading"></app-loading-spinner>
 <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
 <table *ngIf="!loading && users.length" class="list-table">
@@ -7,11 +7,13 @@
   <tr *ngFor="let u of users">
     <td>{{ u.name }}</td>
     <td>{{ u.email }}</td>
-    <td>{{ u.roles.join(', ') }}</td>
+    <td>{{ u.roles?.join(', ') || u.role || 'Customer' }}</td>
     <td>{{ u.active ? 'Active' : 'Banned' }}</td>
     <td>
-      <button (click)="toggleBan(u)">{{ u.active ? 'Ban' : 'Unban' }}</button>
+      <button (click)="toggleBan(u)" class="ban-button" [ngClass]="{'banned': !u.active}">
+        {{ u.active ? 'Ban' : 'Unban' }}
+      </button>
     </td>
   </tr>
 </table>
-<p *ngIf="!loading && !users.length">No users found.</p>
+<p *ngIf="!loading && !users.length">No customers found.</p>

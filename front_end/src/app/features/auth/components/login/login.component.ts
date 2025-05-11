@@ -39,6 +39,9 @@ export class LoginComponent {
         this.loading = false;
         if (err.status === 401) {
           this.error = 'Invalid email or password.';
+        } else if (err.status === 403) {
+          // User is banned
+          this.error = 'Your account has been banned. Please contact support for assistance.';
         } else {
           this.error = 'Login failed. Please try again.';
         }

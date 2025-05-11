@@ -160,6 +160,14 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public List<UserDTO> findAllCustomers() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() == Role.CUSTOMER)
+                .map(this::mapUserToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
     public UserDTO mapUserToDTO(User user) {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());

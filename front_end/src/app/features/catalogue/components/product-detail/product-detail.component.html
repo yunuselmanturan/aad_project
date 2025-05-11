@@ -1,8 +1,33 @@
 <!-- features/catalogue/components/product-detail/product-detail.component.html -->
 <div *ngIf="product; else loadingOrError">
   <div class="product-details">
-    <img [src]="product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/assets/placeholder.png'"
-         alt="{{ product.name }}">
+    <div class="product-images">
+      <div class="main-image-container">
+        <button class="nav-button prev" (click)="prevImage()" *ngIf="product.imageUrls && product.imageUrls.length > 1">
+          <span class="arrow">&#10094;</span>
+        </button>
+        <img
+          class="main-image"
+          [src]="product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[activeImageIndex] : '/assets/placeholder.png'"
+          alt="{{ product.name }}"
+        >
+        <button class="nav-button next" (click)="nextImage()" *ngIf="product.imageUrls && product.imageUrls.length > 1">
+          <span class="arrow">&#10095;</span>
+        </button>
+      </div>
+
+      <div class="thumbnails" *ngIf="product.imageUrls && product.imageUrls.length > 1">
+        <div
+          *ngFor="let img of product.imageUrls; let i = index"
+          class="thumbnail"
+          [class.active]="i === activeImageIndex"
+          (click)="selectImage(i)"
+        >
+          <img [src]="img" alt="{{ product.name }} thumbnail {{ i + 1 }}">
+        </div>
+      </div>
+    </div>
+
     <div class="info">
       <h2>{{ product.name }}</h2>
       <p class="price">{{ product.price | money }}</p>

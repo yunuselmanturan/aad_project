@@ -16,6 +16,7 @@ public interface UserService {
     void delete(Long id);
     UserDTO getCurrentUser();
     List<UserDTO> findAll();
+    List<UserDTO> findAllCustomers();
     UserDTO mapUserToDTO(User user);
     
     UserDTO findByAuthentication(Authentication authentication);

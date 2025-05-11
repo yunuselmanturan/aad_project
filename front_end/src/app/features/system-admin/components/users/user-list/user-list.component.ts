@@ -16,9 +16,23 @@ export class UserListComponent implements OnInit {
   constructor(private adminService: AdminService, private notify: NotificationService) {}
 
   ngOnInit(): void {
-    this.adminService.getAllUsers().subscribe({
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.loading = true;
+    this.adminService.getAllCustomers().subscribe({
       next: users => {
-        this.users = users;
+        // Transform the data to ensure each user has the correct properties
+        this.users = users.map(user => {
+          return {
+            ...user,
+            // Ensure roles exists as an array
+            roles: user.roles || (user.role ? [user.role] : ['CUSTOMER']),
+            // Set active based on banned state if not provided
+            active: user.active !== undefined ? user.active : !user.banned
+          };
+        });
         this.loading = false;
       },
       error: err => {

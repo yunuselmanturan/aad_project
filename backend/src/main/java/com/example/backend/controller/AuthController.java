@@ -38,9 +38,17 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
         
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtil.generateToken(authentication);
         
         User user = (User) authentication.getPrincipal();
+        
+        // Check if user is banned
+        if (user.isBanned()) {
+            return ResponseEntity.status(403).body(
+                (ApiResponse<AuthResponse>) ApiResponse.error("Your account has been banned. Please contact support for assistance.")
+            );
+        }
+        
+        String jwt = jwtUtil.generateToken(authentication);
         UserDTO userDTO = userService.mapUserToDTO(user);
         
         AuthResponse authResponse = new AuthResponse(jwt, userDTO);

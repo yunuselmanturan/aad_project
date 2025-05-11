@@ -289,6 +289,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO createSellerProduct(ProductDTO productDTO, Authentication authentication) {
         User seller = (User) authentication.getPrincipal();
+        
+        // Check if seller is banned
+        if (seller.isBanned()) {
+            throw new AccessDeniedException("You are banned and cannot add new products");
+        }
 
         Store store = storeRepository.findById(productDTO.getStoreId())
                 .orElseThrow(() -> new ResourceNotFoundException("Store not found with id: " + productDTO.getStoreId()));

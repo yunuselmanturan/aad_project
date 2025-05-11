@@ -146,18 +146,18 @@ public class OrderServiceImpl implements OrderService {
 
         // Check authorization if authentication is provided
         if (auth != null) {
-            User user = (User) auth.getPrincipal();
+        User user = (User) auth.getPrincipal();
 
-            if (user.getRole() == Role.SELLER) {
-                boolean ok = order.getItems().stream()
-                                  .anyMatch(i -> i.getStore().getSeller().getId().equals(user.getId()));
-                if (!ok) throw new AccessDeniedException("Not your order");
-            } else if (user.getRole() != Role.PLATFORM_ADMIN) {
-                if (!order.getUser().getId().equals(user.getId()))
-                    throw new AccessDeniedException("Not your order");
-                if (!"CANCELLED".equals(status))
-                    throw new AccessDeniedException("You may only cancel your orders");
-            }
+        if (user.getRole() == Role.SELLER) {
+            boolean ok = order.getItems().stream()
+                              .anyMatch(i -> i.getStore().getSeller().getId().equals(user.getId()));
+            if (!ok) throw new AccessDeniedException("Not your order");
+        } else if (user.getRole() != Role.PLATFORM_ADMIN) {
+            if (!order.getUser().getId().equals(user.getId()))
+                throw new AccessDeniedException("Not your order");
+            if (!"CANCELLED".equals(status))
+                throw new AccessDeniedException("You may only cancel your orders");
+        }
         }
         // If auth is null, we assume it's an admin operation through the admin API endpoints
         // which are already secured by @PreAuthorize("hasRole('PLATFORM_ADMIN')") at the controller level
@@ -201,10 +201,10 @@ public class OrderServiceImpl implements OrderService {
         
         // Check authorization if authentication is provided
         if (auth != null) {
-            User u = (User) auth.getPrincipal();
-            
-            if (!o.getUser().getId().equals(u.getId()) && u.getRole() != Role.PLATFORM_ADMIN)
-                throw new AccessDeniedException("Not your order");
+        User u = (User) auth.getPrincipal();
+
+        if (!o.getUser().getId().equals(u.getId()) && u.getRole() != Role.PLATFORM_ADMIN)
+            throw new AccessDeniedException("Not your order");
         }
         // If auth is null, we assume it's an admin operation
 

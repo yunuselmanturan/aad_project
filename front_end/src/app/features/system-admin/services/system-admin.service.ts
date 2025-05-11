@@ -7,7 +7,15 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export interface UserAccount { id: number; name: string; email: string; roles: string[]; active: boolean; }
+export interface UserAccount {
+  id: number;
+  name: string;
+  email: string;
+  roles?: string[];
+  role?: string;  // Single role string from backend
+  active?: boolean;
+  banned?: boolean; // User's banned status from backend
+}
 export interface SellerAccount extends UserAccount { companyName?: string; }
 
 interface ApiResponse<T> {
@@ -32,6 +40,12 @@ export class AdminService {
     return this.http.get<ApiResponse<UserAccount[]>>(`${this.apiUrl}/admin/users`)
       .pipe(map(response => response.data));
   }
+
+  getAllCustomers(): Observable<UserAccount[]> {
+    return this.http.get<ApiResponse<UserAccount[]>>(`${this.apiUrl}/admin/customers`)
+      .pipe(map(response => response.data));
+  }
+
   banUser(userId: number): Observable<void> {
     return this.http.put<ApiResponse<void>>(`${this.apiUrl}/admin/users/${userId}/ban`, {})
       .pipe(map(response => response.data));

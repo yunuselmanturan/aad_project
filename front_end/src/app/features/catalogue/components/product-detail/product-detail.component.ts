@@ -24,6 +24,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   role: string = '';
   checkingEligibility: boolean = false;
   hasAlreadyPurchased: boolean = false;
+  activeImageIndex: number = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -65,6 +66,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.productService.getProductById(productId).subscribe({
       next: product => {
         this.product = product;
+        this.activeImageIndex = 0; // Reset image index when loading a new product
+
         // Load reviews for this product
         this.loadReviews();
 
@@ -136,6 +139,25 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     // This is important for subsequent visits to the page
     if (this.product) {
       this.reviewService.getUserReviewForProduct(this.product.id).subscribe();
+    }
+  }
+
+  // Image swiper functions
+  selectImage(index: number): void {
+    if (this.product?.imageUrls && index >= 0 && index < this.product.imageUrls.length) {
+      this.activeImageIndex = index;
+    }
+  }
+
+  nextImage(): void {
+    if (this.product?.imageUrls) {
+      this.activeImageIndex = (this.activeImageIndex + 1) % this.product.imageUrls.length;
+    }
+  }
+
+  prevImage(): void {
+    if (this.product?.imageUrls) {
+      this.activeImageIndex = (this.activeImageIndex - 1 + this.product.imageUrls.length) % this.product.imageUrls.length;
     }
   }
 

@@ -4,12 +4,17 @@
 <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
 <button (click)="router.navigate(['/admin/sellers/new'])">Add New Seller</button>
 <table *ngIf="!loading && sellers.length" class="list-table">
-  <tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr>
+  <tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>
   <tr *ngFor="let s of sellers">
     <td>{{ s.name }}</td>
     <td>{{ s.email }}</td>
-    <td>{{ s.active ? 'Active' : 'Disabled' }}</td>
-    <td><button (click)="editSeller(s)">Edit</button></td>
+    <td>{{ s.active ? 'Active' : 'Banned' }}</td>
+    <td>
+      <button (click)="editSeller(s)">Edit</button>
+      <button (click)="toggleBan(s)" class="ban-button" [ngClass]="{'banned': !s.active}">
+        {{ s.active ? 'Ban' : 'Unban' }}
+      </button>
+    </td>
   </tr>
 </table>
 <p *ngIf="!loading && !sellers.length">No sellers found.</p>

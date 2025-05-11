@@ -109,6 +109,216 @@ img {
   color: var(--text-dark);
 }
 
+/* --- FORM STYLES --- */
+/* Form container styles */
+form {
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Form group/row styling */
+form > div,
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+/* Label styling */
+form label,
+.form-label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* Input styling */
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="number"],
+form input[type="date"],
+form input[type="tel"],
+form textarea,
+form select,
+.form-control,
+.form-select {
+  width: 100%;
+  padding: 10px var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: var(--white);
+}
+
+/* Focus states */
+form input:focus,
+form textarea:focus,
+form select:focus,
+.form-control:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-gray);
+  box-shadow: 0 0 0 3px rgba(158, 158, 158, 0.2);
+}
+
+/* Invalid input styling */
+form input.ng-invalid.ng-touched,
+form textarea.ng-invalid.ng-touched,
+form select.ng-invalid.ng-touched,
+.form-control.is-invalid,
+.form-control.ng-invalid.ng-touched,
+.form-select.is-invalid,
+.form-select.ng-invalid.ng-touched {
+  border-color: var(--error-color);
+}
+
+/* Checkbox and radio styling */
+form input[type="checkbox"],
+form input[type="radio"] {
+  margin-right: var(--spacing-xs);
+  vertical-align: middle;
+}
+
+/* Textarea styling */
+form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Error message styling */
+.error,
+.error-message,
+.text-danger,
+.invalid-feedback {
+  display: block;
+  color: var(--error-color);
+  font-size: 12px;
+  margin-top: var(--spacing-xs);
+}
+
+/* Form button styling */
+form button[type="submit"],
+.submit-button {
+  background-color: var(--primary-gray);
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: 10px var(--spacing-md);
+  font-weight: 500;
+  font-size: 14px;
+  min-width: 100px;
+  transition: background-color 0.2s;
+  margin-top: var(--spacing-sm);
+}
+
+form button[type="submit"]:hover:not(:disabled),
+.submit-button:hover:not(:disabled) {
+  background-color: var(--primary-gray-dark);
+}
+
+form button[type="submit"]:disabled,
+.submit-button:disabled {
+  background-color: var(--medium-grey);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Secondary button styling */
+form button[type="button"],
+.btn-secondary {
+  background-color: var(--light-grey);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 9px var(--spacing-md);
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+form button[type="button"]:hover,
+.btn-secondary:hover {
+  background-color: var(--medium-grey);
+}
+
+/* Form grid layout */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -var(--spacing-sm);
+  margin-left: -var(--spacing-sm);
+}
+
+.col-md-12,
+.col-md-6 {
+  padding-right: var(--spacing-sm);
+  padding-left: var(--spacing-sm);
+  width: 100%;
+}
+
+.mb-3 {
+  margin-bottom: var(--spacing-md);
+}
+
+/* Small helper text */
+.form-text {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* Card styling for form wrappers */
+.card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.card-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--light-grey);
+  font-weight: 500;
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+}
+
+.card-body {
+  padding: var(--spacing-md);
+}
+
+/* Form spacing helpers */
+.mt-3 {
+  margin-top: var(--spacing-md);
+}
+
+/* Responsive layout for forms */
+@media (min-width: 768px) {
+  .col-md-6 {
+    width: 50%;
+  }
+}
+
+/* Form array / repeating elements */
+.image-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.image-row input {
+  flex: 1;
+}
+
+.image-row button {
+  padding: 0 var(--spacing-sm);
+}
+
+/* --- END FORM STYLES --- */
+
 /* Navigation */
 .main-nav {
   background: var(--primary-gray-dark);
@@ -533,4 +743,19 @@ img {
 
 .compare-table + .actions button:hover {
   background-color: var(--primary-gray-dark);
+}
+
+/* Ban/unban button styles */
+.ban-button {
+  margin-left: 8px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background-color: #dc3545;
+  color: white;
+}
+
+.ban-button.banned {
+  background-color: #28a745;
 }

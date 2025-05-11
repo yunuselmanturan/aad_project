@@ -51,6 +51,12 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(users));
     }
     
+    @GetMapping("/customers")
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllCustomers() {
+        List<UserDTO> customers = userService.findAllCustomers();
+        return ResponseEntity.ok(ApiResponse.success(customers));
+    }
+    
     @GetMapping("/users/{id}")
     public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
         UserDTO user = userService.findDTOById(id);
