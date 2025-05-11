@@ -19,7 +19,7 @@
   </div>
 
   <!-- Comparison rows for each attribute -->
-  <div class="row" *ngFor="let attr of getComparisonAttributes()">
+  <div class="row" *ngFor="let attr of getComparisonAttributes()" [attr.data-attr]="attr">
     <div class="attribute-label">{{ getAttributeLabel(attr) }}</div>
     <div *ngFor="let product of products" class="product-column">
       {{ getAttributeValue(product, attr) }}

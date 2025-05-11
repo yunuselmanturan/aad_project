@@ -18,7 +18,8 @@ export class CompareDialogComponent {
 
   // Get comparison attributes for the product table
   getComparisonAttributes(): string[] {
-    return ['price', 'categoryId', 'stockQuantity', 'description'];
+    // Order: Description first, then price, stock, and category
+    return ['description', 'price', 'stockQuantity', 'categoryId'];
   }
 
   // Get attribute label for display
