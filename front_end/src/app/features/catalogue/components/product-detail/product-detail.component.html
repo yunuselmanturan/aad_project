@@ -17,11 +17,30 @@
     <h3>Reviews ({{ reviews.length }})</h3>
     <app-review-list [reviews]="reviews"></app-review-list>
 
-    <!-- Only show review form if user is logged in -->
+    <!-- Review Form Section -->
     <div *ngIf="isLoggedIn; else loginPrompt">
-      <h4>Add Your Review:</h4>
-      <app-review-form [productId]="product.id" (reviewSubmitted)="onReviewSubmitted($event)"></app-review-form>
+      <div *ngIf="checkingEligibility">
+        <p>Checking if you can review this product...</p>
+      </div>
+
+      <div *ngIf="!checkingEligibility">
+        <div *ngIf="canReview; else cannotReview">
+          <app-review-form [productId]="product.id" (reviewSubmitted)="onReviewSubmitted($event)"></app-review-form>
+        </div>
+
+        <ng-template #cannotReview>
+          <div class="review-eligibility-notice">
+            <p *ngIf="role === 'SELLER' || role === 'PLATFORM_ADMIN'">
+              Sellers and administrators cannot submit product reviews.
+            </p>
+            <p *ngIf="role !== 'SELLER' && role !== 'PLATFORM_ADMIN' && !hasAlreadyPurchased">
+              You can only review products you have purchased and received.
+            </p>
+          </div>
+        </ng-template>
+      </div>
     </div>
+
     <ng-template #loginPrompt>
       <p><a routerLink="/auth/login">Log in</a> to write a review.</p>
     </ng-template>

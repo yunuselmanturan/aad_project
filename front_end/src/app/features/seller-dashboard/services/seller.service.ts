@@ -75,6 +75,16 @@ export class SellerService {
       .pipe(map(response => response.data));
   }
 
+  updateOrderStatus(orderId: number, status: string): Observable<Order> {
+    return this.http.put<{data: Order}>(`${this.apiUrl}/seller/orders/${orderId}/status`, { status })
+      .pipe(map(response => response.data));
+  }
+
+  cancelOrder(orderId: number): Observable<Order> {
+    return this.http.put<{data: Order}>(`${this.apiUrl}/seller/orders/${orderId}/cancel`, {})
+      .pipe(map(response => response.data));
+  }
+
   /* ───────────── analytics ─────────── */
 
   /**

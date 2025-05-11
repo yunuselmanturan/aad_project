@@ -22,7 +22,9 @@ export class SellerFormComponent implements OnInit {
   ngOnInit(): void {
     this.sellerForm = this.fb.group({
       name: ['', Validators.required],
+      surname: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      password: ['', this.editing ? null : Validators.required],
       active: [true],
       // possibly other fields like companyName
     });
@@ -36,6 +38,8 @@ export class SellerFormComponent implements OnInit {
           const seller = sellers.find(s => s.id === this.sellerId);
           if (seller) {
             this.sellerForm.patchValue(seller);
+            this.sellerForm.get('password')?.clearValidators();
+            this.sellerForm.get('password')?.updateValueAndValidity();
           } else {
             this.error = 'Seller not found.';
           }
@@ -71,7 +75,7 @@ export class SellerFormComponent implements OnInit {
       this.adminService.createSeller(data).subscribe({
         next: () => {
           this.notify.showSuccess('Seller account created.');
-          this.router.navigate(['/system-admin/sellers']);
+          this.router.navigate(['/admin/sellers']);
         },
         error: err => {
           console.error('Create seller failed', err);

@@ -8,6 +8,7 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.*;
 import com.example.backend.service.CartService;
 import com.example.backend.service.OrderService;
+import com.example.backend.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,8 @@ public class OrderServiceImpl implements OrderService {
     @Autowired private ProductRepository      productRepository;
     @Autowired private ProductImageRepository productImageRepository;
     @Autowired private CartService            cartService;
+    @Autowired private PaymentService         paymentService;
+    @Autowired private PaymentRepository      paymentRepository;
 
     /* ──────────────────────────── basic CRUD / queries ─────────────────────────── */
 
@@ -141,23 +144,52 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                                      .orElseThrow(() -> new ResourceNotFoundException("Order not found id=" + id));
 
-        User user = (User) auth.getPrincipal();
+        // Check authorization if authentication is provided
+        if (auth != null) {
+            User user = (User) auth.getPrincipal();
 
-        if (user.getRole() == Role.SELLER) {
-            boolean ok = order.getItems().stream()
-                              .anyMatch(i -> i.getStore().getSeller().getId().equals(user.getId()));
-            if (!ok) throw new AccessDeniedException("Not your order");
-        } else if (user.getRole() != Role.PLATFORM_ADMIN) {
-            if (!order.getUser().getId().equals(user.getId()))
-                throw new AccessDeniedException("Not your order");
-            if (!"CANCELLED".equals(status))
-                throw new AccessDeniedException("You may only cancel your orders");
+            if (user.getRole() == Role.SELLER) {
+                boolean ok = order.getItems().stream()
+                                  .anyMatch(i -> i.getStore().getSeller().getId().equals(user.getId()));
+                if (!ok) throw new AccessDeniedException("Not your order");
+            } else if (user.getRole() != Role.PLATFORM_ADMIN) {
+                if (!order.getUser().getId().equals(user.getId()))
+                    throw new AccessDeniedException("Not your order");
+                if (!"CANCELLED".equals(status))
+                    throw new AccessDeniedException("You may only cancel your orders");
+            }
         }
+        // If auth is null, we assume it's an admin operation through the admin API endpoints
+        // which are already secured by @PreAuthorize("hasRole('PLATFORM_ADMIN')") at the controller level
 
         List<String> valid = List.of("PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED");
         if (!valid.contains(status)) throw new BadRequestException("Bad status: " + status);
 
+        String previousStatus = order.getShipmentStatus();
         order.setShipmentStatus(status);
+        
+        // Process refund if the order is being cancelled
+        if ("CANCELLED".equals(status) && 
+            (previousStatus.equals("PENDING") || previousStatus.equals("CONFIRMED"))) {
+            
+            // Check if there's a completed payment for this order
+            boolean hasCompletedPayment = paymentRepository.findByOrder(order)
+                .filter(payment -> "COMPLETED".equals(payment.getStatus()))
+                .isPresent();
+                
+            if (hasCompletedPayment) {
+                try {
+                    // Process the refund through Stripe
+                    paymentService.processRefund(id);
+                    System.out.println("Refund processed for order: " + id);
+                } catch (Exception e) {
+                    System.err.println("Failed to process refund: " + e.getMessage());
+                    // Continue with the status update even if refund fails
+                    // We may want to log this or create a pending refund record
+                }
+            }
+        }
+        
         return mapOrderToDTO(orderRepository.save(order));
     }
 
@@ -166,10 +198,15 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(Long id, Authentication auth) {
         Order o = orderRepository.findById(id)
                                  .orElseThrow(() -> new ResourceNotFoundException("Order not found id=" + id));
-        User u = (User) auth.getPrincipal();
-
-        if (!o.getUser().getId().equals(u.getId()) && u.getRole() != Role.PLATFORM_ADMIN)
-            throw new AccessDeniedException("Not your order");
+        
+        // Check authorization if authentication is provided
+        if (auth != null) {
+            User u = (User) auth.getPrincipal();
+            
+            if (!o.getUser().getId().equals(u.getId()) && u.getRole() != Role.PLATFORM_ADMIN)
+                throw new AccessDeniedException("Not your order");
+        }
+        // If auth is null, we assume it's an admin operation
 
         if (!List.of("PENDING", "CONFIRMED").contains(o.getShipmentStatus()))
             throw new BadRequestException("Cannot cancel order with status: " + o.getShipmentStatus());
@@ -179,6 +216,22 @@ public class OrderServiceImpl implements OrderService {
             p.setStockQuantity(p.getStockQuantity() + oi.getQuantity());
             productRepository.save(p);
         });
+
+        // Check if there's a completed payment for this order
+        boolean hasCompletedPayment = paymentRepository.findByOrder(o)
+            .filter(payment -> "COMPLETED".equals(payment.getStatus()))
+            .isPresent();
+            
+        if (hasCompletedPayment) {
+            try {
+                // Process the refund through Stripe
+                paymentService.processRefund(id);
+                System.out.println("Refund processed for order: " + id);
+            } catch (Exception e) {
+                System.err.println("Failed to process refund: " + e.getMessage());
+                // Continue with the status update even if refund fails
+            }
+        }
 
         o.setShipmentStatus("CANCELLED");
         orderRepository.save(o);

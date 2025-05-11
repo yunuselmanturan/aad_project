@@ -14,6 +14,7 @@ export class GlobalOrderListComponent implements OnInit {
   orders: Order[] = [];
   loading: boolean = true;
   error: string | null = null;
+  shipmentStatuses: string[] = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
   constructor(private adminService: AdminService, private notify: NotificationService) {}
 
@@ -46,6 +47,19 @@ export class GlobalOrderListComponent implements OnInit {
       error: err => {
         console.error('Cancel order failed', err);
         this.notify.showError('Failed to cancel order.');
+      }
+    });
+  }
+
+  updateShipmentStatus(order: Order, status: string): void {
+    this.adminService.updateShipmentStatus(order.id, status).subscribe({
+      next: updated => {
+        order.status = updated.status;
+        this.notify.showSuccess(`Order #${order.id} status updated to ${status}.`);
+      },
+      error: err => {
+        console.error('Update shipment status failed', err);
+        this.notify.showError('Failed to update shipment status.');
       }
     });
   }

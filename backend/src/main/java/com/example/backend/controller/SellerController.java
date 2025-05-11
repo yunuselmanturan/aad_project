@@ -32,10 +32,29 @@ public class SellerController {
     @PutMapping("/orders/{id}/status")
     public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
             @PathVariable Long id,
-            @RequestParam String status,
+            @RequestBody Map<String, String> body,
             Authentication authentication) {
+        String status = body.get("status");
         OrderDTO updatedOrder = orderService.updateOrderStatus(id, status, authentication);
         return ResponseEntity.ok(ApiResponse.success("Order status updated", updatedOrder));
+    }
+    
+    @PutMapping("/orders/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderDTO>> cancelOrder(
+            @PathVariable Long id,
+            Authentication authentication) {
+        orderService.cancelOrder(id, authentication);
+        OrderDTO order = orderService.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Order cancelled", order));
+    }
+    
+    @PutMapping("/orders/{id}/ship")
+    public ResponseEntity<ApiResponse<OrderDTO>> shipOrder(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            Authentication authentication) {
+        OrderDTO updatedOrder = orderService.updateOrderStatus(id, "SHIPPED", authentication);
+        return ResponseEntity.ok(ApiResponse.success("Order marked as shipped", updatedOrder));
     }
 
     /* ---------- PRODUCTS ---------- */

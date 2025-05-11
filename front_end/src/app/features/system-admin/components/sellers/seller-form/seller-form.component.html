@@ -7,9 +7,19 @@
     <div class="error" *ngIf="sellerForm.get('name')?.touched && sellerForm.get('name')?.invalid">Name is required.</div>
   </div>
   <div>
+    <label>Surname:</label>
+    <input formControlName="surname" type="text" />
+    <div class="error" *ngIf="sellerForm.get('surname')?.touched && sellerForm.get('surname')?.invalid">Surname is required.</div>
+  </div>
+  <div>
     <label>Email:</label>
     <input formControlName="email" type="email" />
     <div class="error" *ngIf="sellerForm.get('email')?.touched && sellerForm.get('email')?.invalid">Valid email is required.</div>
+  </div>
+  <div>
+    <label>Password:</label>
+    <input formControlName="password" type="password" />
+    <div class="error" *ngIf="sellerForm.get('password')?.touched && sellerForm.get('password')?.invalid">Password is required for new sellers.</div>
   </div>
   <div>
     <label>Active:</label>

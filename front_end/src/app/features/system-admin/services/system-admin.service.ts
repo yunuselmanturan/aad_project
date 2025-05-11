@@ -67,6 +67,11 @@ export class AdminService {
       .pipe(map(response => response.data));
   }
 
+  updateShipmentStatus(orderId: number, status: string): Observable<Order> {
+    return this.http.put<ApiResponse<Order>>(`${this.apiUrl}/admin/orders/${orderId}/shipment`, { status })
+      .pipe(map(response => response.data));
+  }
+
   // Payment issues
   getPaymentIssues(): Observable<Order[]> {
     return this.http.get<ApiResponse<Order[]>>(`${this.apiUrl}/admin/payment-issues`)
