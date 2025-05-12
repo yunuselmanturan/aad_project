@@ -25,9 +25,15 @@ export class CategoryService {
 
   constructor(private http: HttpClient) { }
 
-  // Get all root categories
+  // Get all root categories (top-level categories only)
   getAllCategories(): Observable<Category[]> {
     return this.http.get<ApiResponse<Category[]>>(this.apiUrl)
+      .pipe(map(response => response.data));
+  }
+
+  // Get all categories (including child categories)
+  getAllCategoriesIncludingChildren(): Observable<Category[]> {
+    return this.http.get<ApiResponse<Category[]>>(`${this.apiUrl}/all`)
       .pipe(map(response => response.data));
   }
 

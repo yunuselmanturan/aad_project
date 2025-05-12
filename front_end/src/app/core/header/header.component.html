@@ -21,7 +21,7 @@
   </div>
 </nav>
 
-<!-- Admin Menu (separate from navbar, always visible when admin) -->
+<!-- Admin Menu -->
 <div *ngIf="isAdmin" class="submenu admin-menu">
   <ul>
     <li><a routerLink="/admin/users">User Management</a></li>
@@ -33,17 +33,12 @@
   </ul>
 </div>
 
-<!-- Seller Menu (separate from navbar, always visible when seller) -->
-<div class="submenu seller-menu" [ngStyle]="{'display': isSeller ? 'block' : 'none'}">
+<!-- Seller Menu -->
+<div *ngIf="isSeller && !isAdmin" class="submenu seller-menu">
   <ul>
     <li><a routerLink="/seller/stores">My Stores</a></li>
     <li><a routerLink="/seller/products">My Products</a></li>
     <li><a routerLink="/seller/orders">Seller Orders</a></li>
     <li><a routerLink="/seller/products/new">Add Product</a></li>
   </ul>
-</div>
-
-<!-- Debug information (remove in production) -->
-<div style="background-color: #f5f5f5; padding: 5px; margin-top: 5px; font-size: 0.8em;" *ngIf="isLoggedIn">
-  <p>Debug: isAdmin: {{isAdmin}}, isSeller: {{isSeller}}</p>
 </div>

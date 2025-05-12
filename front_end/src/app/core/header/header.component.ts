@@ -20,78 +20,112 @@ export class HeaderComponent implements OnInit {
   ngOnInit(): void {
     // Subscribe to login status
     this.authService.currentUser$.subscribe(user => {
-      console.log('Current user object:', user); // Log the entire user object
+      console.log('Current user object:', user);
 
       this.isLoggedIn = !!user;
       if (user) {
         this.username = user.name || user.email;
 
-        // DEBUG: Print detailed user info
-        console.log('User details for role checking:');
-        console.log('- ID:', user.id);
-        console.log('- Name:', this.username);
-        console.log('- Email:', user.email);
+        // Reset role flags
+        this.isAdmin = false;
+        this.isSeller = false;
 
-        // Check for user roles directly from the user object
-        console.log('Raw roles from user object:', user.roles);
+        console.log('Checking user roles:', user.roles);
 
-        // Debug each role individually if they exist
+        // Extremely permissive admin detection - if any role contains the word "admin" (case insensitive)
+        // This should catch any possible admin role format
         if (user.roles && Array.isArray(user.roles)) {
-          console.log('Checking each role individually:');
+          console.log('Role array length:', user.roles.length);
+
+          // Print all roles for debugging
           user.roles.forEach((role, index) => {
             console.log(`Role ${index}:`, role);
-            console.log(`- Contains "SELLER" (case-insensitive):`, role.toUpperCase().includes('SELLER'));
-            console.log(`- Contains "seller" (lowercase):`, role.includes('seller'));
-            console.log(`- Equals "SELLER":`, role === 'SELLER');
-            console.log(`- Equals "ROLE_SELLER":`, role === 'ROLE_SELLER');
           });
-        }
 
-        // ALWAYS set isSeller to true if the user's email has any hint of being a seller
-        // This is for debugging - you can make this more restrictive later
-        if (user.email && (
-            user.email.toLowerCase().includes('seller') ||
-            this.username?.toLowerCase().includes('seller') ||
-            // Force all users to show seller menu for testing
-            true
-        )) {
-          console.log('⭐ FORCING seller menu display for debugging');
-          this.isSeller = true;
-        } else {
-          // Direct check of roles array if it exists
-          if (user.roles && Array.isArray(user.roles)) {
-            // Check for admin roles
-            this.isAdmin = user.roles.some(role =>
-              role.includes('ADMIN') || role.includes('admin')
-            );
+          // Check for admin roles using substring matching (case insensitive)
+          this.isAdmin = user.roles.some(role => {
+            if (typeof role === 'string' && role.toUpperCase().includes('ADMIN')) {
+              console.log('Admin role found (case insensitive):', role);
+              return true;
+            }
+            return false;
+          });
 
-            // Check for seller roles - look for any role containing SELLER (case insensitive)
-            this.isSeller = user.roles.some(role =>
-              role.toUpperCase().includes('SELLER')
-            );
-          }
-
-          // Fallback to the service's hasRole method
+          // If admin role not found in array, check using auth service
           if (!this.isAdmin) {
-            this.isAdmin = this.authService.hasRole('ADMIN') ||
-                           this.authService.hasRole('ROLE_ADMIN') ||
-                           this.authService.hasRole('PLATFORM_ADMIN') ||
-                           this.authService.hasRole('ROLE_PLATFORM_ADMIN');
+            // Use auth service as fallback
+            const adminRoles = ['PLATFORM_ADMIN', 'ADMIN', 'ROLE_ADMIN'];
+            for (const role of adminRoles) {
+              if (this.authService.hasRole(role)) {
+                console.log('Admin role found via auth service:', role);
+                this.isAdmin = true;
+                break;
+              }
+            }
           }
 
-          if (!this.isSeller) {
-            this.isSeller = this.authService.hasRole('SELLER') ||
-                            this.authService.hasRole('ROLE_SELLER');
+          console.log('isAdmin after checks:', this.isAdmin);
+
+          // Special case: check if email contains "admin" as a fallback
+          if (!this.isAdmin && user.email && user.email.toLowerCase().includes('admin')) {
+            console.log('Admin detected from email:', user.email);
+            this.isAdmin = true;
+          }
+
+          // Only check for seller role if not admin
+          if (!this.isAdmin) {
+            // Check for seller roles
+            this.isSeller = user.roles.some(role => {
+              if (typeof role === 'string' && role.toUpperCase().includes('SELLER')) {
+                console.log('Seller role found (case insensitive):', role);
+                return true;
+              }
+              return false;
+            });
+
+            // If seller role not found in array, check using auth service
+            if (!this.isSeller) {
+              const sellerRoles = ['SELLER', 'ROLE_SELLER'];
+              for (const role of sellerRoles) {
+                if (this.authService.hasRole(role)) {
+                  console.log('Seller role found via auth service:', role);
+                  this.isSeller = true;
+                  break;
+                }
+              }
+            }
+
+            // Special case: check if email contains "seller" as a fallback
+            if (!this.isSeller && user.email && user.email.toLowerCase().includes('seller')) {
+              console.log('Seller detected from email:', user.email);
+              this.isSeller = true;
+            }
+
+            console.log('isSeller after all checks:', this.isSeller);
+          }
+        } else {
+          console.log('Roles is not an array or is undefined:', user.roles);
+
+          // Even if roles isn't an array, check email as a last resort
+          if (user.email) {
+            if (user.email.toLowerCase().includes('admin')) {
+              console.log('Admin detected from email (fallback):', user.email);
+              this.isAdmin = true;
+            } else if (user.email.toLowerCase().includes('seller')) {
+              console.log('Seller detected from email (fallback):', user.email);
+              this.isSeller = true;
+            }
           }
         }
 
-        // Final debug output
-        console.log('Determined isAdmin value:', this.isAdmin);
-        console.log('Determined isSeller value:', this.isSeller);
+        // Final determination
+        console.log('FINAL ROLE DETERMINATION:');
+        console.log('- isAdmin:', this.isAdmin);
+        console.log('- isSeller:', this.isSeller);
       } else {
         this.username = null;
-        this.isSeller = false;
         this.isAdmin = false;
+        this.isSeller = false;
       }
     });
   }

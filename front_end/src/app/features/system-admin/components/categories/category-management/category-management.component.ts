@@ -28,7 +28,7 @@ export class CategoryManagementComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.categoryService.getAllCategories().subscribe({
+    this.categoryService.getAllCategoriesIncludingChildren().subscribe({
       next: (data) => {
         this.categories = data;
         this.loading = false;

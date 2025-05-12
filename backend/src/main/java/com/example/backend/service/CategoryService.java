@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface CategoryService {
     List<CategoryDTO> findAllRoot();
+    List<CategoryDTO> findAll();
     List<CategoryDTO> findSubcategories(Long parentId);
     CategoryDTO findById(Long id);
     CategoryDTO create(CategoryDTO categoryDTO);

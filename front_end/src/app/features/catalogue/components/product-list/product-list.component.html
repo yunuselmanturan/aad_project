@@ -3,10 +3,17 @@
   <!-- Search bar and category filter -->
   <div class="toolbar">
     <input type="text" placeholder="Search products..." (input)="onSearch($any($event.target).value)" />
-    <!-- Example category filter dropdown -->
+    <!-- Category filter dropdown with parent-child hierarchy -->
     <select (change)="onCategorySelected($any($event.target).value)">
       <option value="">All Categories</option>
-      <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+      <!-- Root categories -->
+      <ng-container *ngFor="let cat of rootCategories">
+        <option [value]="cat.id">{{ cat.name }}</option>
+        <!-- Child categories with indentation -->
+        <ng-container *ngFor="let childCat of getChildCategories(cat.id)">
+          <option [value]="childCat.id">— {{ childCat.name }}</option>
+        </ng-container>
+      </ng-container>
     </select>
   </div>
 

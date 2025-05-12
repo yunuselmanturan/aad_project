@@ -25,6 +25,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public List<CategoryDTO> findAll() {
+        return categoryRepository.findAll().stream()
+                .map(this::mapCategoryToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<CategoryDTO> findSubcategories(Long parentId) {
         Category parentCategory = categoryRepository.findById(parentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent category not found with id: " + parentId));

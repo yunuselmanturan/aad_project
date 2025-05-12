@@ -18,6 +18,7 @@ export class ProductListComponent implements OnInit {
   products: Product[] = [];
   filteredProducts: Product[] = [];
   categories: Category[] = [];
+  rootCategories: Category[] = [];  // Root categories (no parent)
   searchTerm: string = '';
   categoryFilter: string = '';
 
@@ -103,13 +104,24 @@ export class ProductListComponent implements OnInit {
   getCategories(): void {
     this.categoryService.getCategories().subscribe(
       (categories: Category[]) => {
-        // On success, store the categories
+        // Store all categories
         this.categories = categories;
+
+        // Filter out root categories (those without a parent)
+        this.rootCategories = this.categories.filter(cat =>
+          !cat.parentCategoryId
+        );
       },
       (error) => {
-        // On error, log the issue (could also show a notification)
         console.error('Failed to load categories:', error);
       }
+    );
+  }
+
+  // Get child categories for a given parent category ID
+  getChildCategories(parentId: number): Category[] {
+    return this.categories.filter(cat =>
+      cat.parentCategoryId === parentId
     );
   }
 
