@@ -8,6 +8,9 @@ import { UserListComponent } from './components/users/user-list/user-list.compon
 import { GlobalOrderListComponent } from './components/global-orders/global-order-list/global-order-list.component';
 import { PaymentIssuesComponent } from './components/payments/payment-issues/payment-issues.component';
 import { ProductManagementComponent } from './components/products/product-management/product-management.component';
+// Uncomment these imports now that the components are available
+import { CategoryManagementComponent } from './components/categories/category-management/category-management.component';
+import { CategoryFormComponent } from './components/categories/category-form/category-form.component';
 
 const routes: Routes = [
   { path: '', component: DashboardComponent },
@@ -17,7 +20,11 @@ const routes: Routes = [
   { path: 'users', component: UserListComponent },
   { path: 'orders', component: GlobalOrderListComponent },
   { path: 'payments', component: PaymentIssuesComponent },
-  { path: 'products', component: ProductManagementComponent }
+  { path: 'products', component: ProductManagementComponent },
+  // Uncomment these routes now that the components are available
+  { path: 'categories', component: CategoryManagementComponent },
+  { path: 'categories/new', component: CategoryFormComponent },
+  { path: 'categories/:id', component: CategoryFormComponent }
 ];
 @NgModule({
   imports: [RouterModule.forChild(routes)],

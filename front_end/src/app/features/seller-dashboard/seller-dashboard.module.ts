@@ -10,6 +10,8 @@ import { SellerProductListComponent } from './components/products/seller-product
 import { SellerProductFormComponent } from './components/products/seller-product-form/seller-product-form.component';
 import { SellerOrderListComponent } from './components/orders/seller-order-list/seller-order-list.component';
 import { ShipmentTrackingComponent } from './components/shipments/shipment-tracking/shipment-tracking.component';
+import { SellerStoreListComponent } from './components/stores/seller-store-list/seller-store-list.component';
+import { SellerStoreFormComponent } from './components/stores/seller-store-form/seller-store-form.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +19,9 @@ import { ShipmentTrackingComponent } from './components/shipments/shipment-track
     SellerProductListComponent,
     SellerProductFormComponent,
     SellerOrderListComponent,
-    ShipmentTrackingComponent
+    ShipmentTrackingComponent,
+    SellerStoreListComponent,
+    SellerStoreFormComponent
   ],
   imports: [ CommonModule, ReactiveFormsModule, SharedModule, SellerDashboardRoutingModule ]
 })

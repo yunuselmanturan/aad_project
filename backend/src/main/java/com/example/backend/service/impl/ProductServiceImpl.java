@@ -382,7 +382,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductImage> existingImages = product.getImages();
         product.setImages(null);
         product = productRepository.save(product);
-        
+
         // Delete existing images manually using repository methods
         if (existingImages != null && !existingImages.isEmpty()) {
             productImageRepository.deleteAll(existingImages);
@@ -397,14 +397,14 @@ public class ProductServiceImpl implements ProductService {
                     ProductImage image = new ProductImage(product, url, i == 0);
                     image = productImageRepository.save(image);
                     newImages.add(image);
-                }
+            }
             }
         }
         
         // Set the new images and save again
         product.setImages(newImages);
         Product updatedProduct = productRepository.save(product);
-        
+
         return mapProductToDTO(updatedProduct);
     }
     

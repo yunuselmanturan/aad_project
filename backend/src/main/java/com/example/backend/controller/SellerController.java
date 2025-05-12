@@ -63,7 +63,7 @@ public class SellerController {
         List<ProductDTO> products = productService.findSellerProducts(authentication);
         return ResponseEntity.ok(ApiResponse.success(products));
     }
-    
+
     @GetMapping("/products/archived")
     public ResponseEntity<ApiResponse<List<ProductDTO>>> getSellerArchivedProducts(Authentication authentication) {
         List<ProductDTO> products = productService.findSellerArchivedProducts(authentication);

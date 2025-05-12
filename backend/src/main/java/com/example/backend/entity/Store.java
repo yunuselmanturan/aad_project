@@ -21,8 +21,8 @@ public class Store {
     @Column(name = "store_id")
     private Long id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "seller_id", referencedColumnName = "user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "seller_id", referencedColumnName = "user_id", unique = false)
     private User seller;
 
     @Column(name = "store_name")

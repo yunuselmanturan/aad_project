@@ -52,24 +52,24 @@ export class SellerProductFormComponent implements OnInit {
 
           // Safely handle product data
           if (product) {
-            // Add image URLs to form array
+          // Add image URLs to form array
             if (product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
-              product.imageUrls.forEach(url => {
-                this.imageUrlsArray.push(this.fb.control(url));
-              });
-            } else {
-              this.imageUrlsArray.push(this.fb.control(''));
-            }
+            product.imageUrls.forEach(url => {
+              this.imageUrlsArray.push(this.fb.control(url));
+            });
+          } else {
+            this.imageUrlsArray.push(this.fb.control(''));
+          }
 
             // Safe value patching
-            this.productForm.patchValue({
+          this.productForm.patchValue({
               name: product.name || '',
               price: product.price || 0,
               categoryId: product.categoryId || '',
               storeId: product.storeId || '',
               description: product.description || '',
               stockQuantity: product.stockQuantity || 1
-            });
+          });
           } else {
             // Handle empty product
             this.error = 'Could not load product data.';

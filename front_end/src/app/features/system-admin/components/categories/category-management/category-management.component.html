@@ -1,0 +1,38 @@
+<div class="container">
+  <h2>Category Management</h2>
+
+  <app-loading-spinner *ngIf="loading"></app-loading-spinner>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+
+  <div class="actions mb-4">
+    <button class="btn btn-primary" (click)="addCategory()">Add New Category</button>
+  </div>
+
+  <div class="categories-container" *ngIf="!loading && !error">
+    <div *ngIf="categories.length === 0" class="empty-state">
+      <p>No categories found. Create your first category to organize products!</p>
+    </div>
+
+    <table class="table category-table" *ngIf="categories.length > 0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Parent Category</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let category of categories">
+          <td>{{ category.id }}</td>
+          <td>{{ category.name }}</td>
+          <td>{{ getParentCategoryName(category.parentCategoryId) }}</td>
+          <td class="actions-cell">
+            <button class="btn btn-sm btn-outline-primary" (click)="editCategory(category.id)">Edit</button>
+            <button class="btn btn-sm btn-outline-danger" (click)="deleteCategory(category.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -6,6 +6,8 @@ import { SellerProductListComponent } from './components/products/seller-product
 import { SellerProductFormComponent } from './components/products/seller-product-form/seller-product-form.component';
 import { SellerOrderListComponent } from './components/orders/seller-order-list/seller-order-list.component';
 import { ShipmentTrackingComponent } from './components/shipments/shipment-tracking/shipment-tracking.component';
+import { SellerStoreListComponent } from './components/stores/seller-store-list/seller-store-list.component';
+import { SellerStoreFormComponent } from './components/stores/seller-store-form/seller-store-form.component';
 
 const routes: Routes = [
   { path: '', component: SellerDashboardComponent },
@@ -13,7 +15,10 @@ const routes: Routes = [
   { path: 'products/new', component: SellerProductFormComponent },
   { path: 'products/:id/edit', component: SellerProductFormComponent },
   { path: 'orders', component: SellerOrderListComponent },
-  { path: 'shipments/:orderId', component: ShipmentTrackingComponent }
+  { path: 'shipments/:orderId', component: ShipmentTrackingComponent },
+  { path: 'stores', component: SellerStoreListComponent },
+  { path: 'stores/new', component: SellerStoreFormComponent },
+  { path: 'stores/:id/edit', component: SellerStoreFormComponent }
 ];
 @NgModule({
   imports: [RouterModule.forChild(routes)],

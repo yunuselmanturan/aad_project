@@ -38,7 +38,7 @@ public class Product {
 
     @Column(name = "stock_quantity")
     private int stockQuantity;
-    
+
     @Column(name = "is_deleted")
     private Boolean deleted = false; // Changed from primitive boolean to wrapper Boolean with default false
 

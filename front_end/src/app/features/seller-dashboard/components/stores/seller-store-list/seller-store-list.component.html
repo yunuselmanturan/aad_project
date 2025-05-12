@@ -1,0 +1,29 @@
+<div class="container">
+  <h2>My Stores</h2>
+
+  <app-loading-spinner *ngIf="loading"></app-loading-spinner>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+
+  <div class="actions mb-4">
+    <button class="btn btn-primary" (click)="addStore()">Add New Store</button>
+  </div>
+
+  <div class="stores-container" *ngIf="!loading && !error">
+    <div *ngIf="stores.length === 0" class="empty-state">
+      <p>You don't have any stores yet. Create your first store to start selling products!</p>
+    </div>
+
+    <div class="store-grid" *ngIf="stores.length > 0">
+      <div class="store-card" *ngFor="let store of stores">
+        <h3>{{ store.storeName }}</h3>
+        <p *ngIf="store.description">{{ store.description }}</p>
+        <p class="date" *ngIf="store.createdAt">Created: {{ store.createdAt | date }}</p>
+
+        <div class="card-actions">
+          <button class="btn btn-outline-primary" (click)="editStore(store.id)">Edit</button>
+          <button class="btn btn-outline-danger" (click)="deleteStore(store.id)">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -12,6 +12,8 @@ import { UserListComponent } from './components/users/user-list/user-list.compon
 import { GlobalOrderListComponent } from './components/global-orders/global-order-list/global-order-list.component';
 import { PaymentIssuesComponent } from './components/payments/payment-issues/payment-issues.component';
 import { ProductManagementComponent } from './components/products/product-management/product-management.component';
+import { CategoryManagementComponent } from './components/categories/category-management/category-management.component';
+import { CategoryFormComponent } from './components/categories/category-form/category-form.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +23,9 @@ import { ProductManagementComponent } from './components/products/product-manage
     UserListComponent,
     GlobalOrderListComponent,
     PaymentIssuesComponent,
-    ProductManagementComponent
+    ProductManagementComponent,
+    CategoryManagementComponent,
+    CategoryFormComponent
   ],
   imports: [ CommonModule, ReactiveFormsModule, SharedModule, SystemAdminRoutingModule ]
 })

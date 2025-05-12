@@ -6,12 +6,6 @@
       <li><a routerLink="/catalogue">Catalogue</a></li>
       <li><a routerLink="/cart">Cart</a></li>
       <li *ngIf="isLoggedIn"><a routerLink="/orders">My Orders</a></li>
-
-      <!-- Admin Portal Link -->
-      <li *ngIf="isAdmin"><a routerLink="/admin">Admin Portal</a></li>
-
-      <!-- Seller Dashboard Link -->
-      <li *ngIf="isSeller"><a routerLink="/seller">Seller Dashboard</a></li>
     </ul>
   </div>
 
@@ -35,14 +29,21 @@
     <li><a routerLink="/admin/orders">Order Management</a></li>
     <li><a routerLink="/admin/payments">Payment Issues</a></li>
     <li><a routerLink="/admin/products">Product Management</a></li>
+    <li><a routerLink="/admin/categories">Category Management</a></li>
   </ul>
 </div>
 
 <!-- Seller Menu (separate from navbar, always visible when seller) -->
-<div *ngIf="isSeller" class="submenu seller-menu">
+<div class="submenu seller-menu" [ngStyle]="{'display': isSeller ? 'block' : 'none'}">
   <ul>
+    <li><a routerLink="/seller/stores">My Stores</a></li>
     <li><a routerLink="/seller/products">My Products</a></li>
     <li><a routerLink="/seller/orders">Seller Orders</a></li>
     <li><a routerLink="/seller/products/new">Add Product</a></li>
   </ul>
+</div>
+
+<!-- Debug information (remove in production) -->
+<div style="background-color: #f5f5f5; padding: 5px; margin-top: 5px; font-size: 0.8em;" *ngIf="isLoggedIn">
+  <p>Debug: isAdmin: {{isAdmin}}, isSeller: {{isSeller}}</p>
 </div>
