@@ -38,8 +38,11 @@ public class Product {
 
     @Column(name = "stock_quantity")
     private int stockQuantity;
+    
+    @Column(name = "is_deleted")
+    private Boolean deleted = false; // Changed from primitive boolean to wrapper Boolean with default false
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<ProductImage> images;
 
     // Complete constructor including the seller field
@@ -51,5 +54,6 @@ public class Product {
         this.description = description;
         this.price = price;
         this.stockQuantity = stockQuantity;
+        this.deleted = false;
     }
 }

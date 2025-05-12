@@ -102,8 +102,23 @@ export class AdminService {
       .pipe(map(response => response.data));
   }
 
+  getAllProductsIncludingArchived(): Observable<Product[]> {
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/admin/products/all`)
+      .pipe(map(response => response.data));
+  }
+
+  getArchivedProducts(): Observable<Product[]> {
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/admin/products/archived`)
+      .pipe(map(response => response.data));
+  }
+
   removeProduct(productId: number): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/admin/products/${productId}`)
+      .pipe(map(response => response.data));
+  }
+
+  activateProduct(productId: number): Observable<void> {
+    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/admin/products/${productId}/activate`, {})
       .pipe(map(response => response.data));
   }
 }

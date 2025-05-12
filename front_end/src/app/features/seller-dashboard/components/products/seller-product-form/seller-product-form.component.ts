@@ -50,30 +50,42 @@ export class SellerProductFormComponent implements OnInit {
             this.imageUrlsArray.removeAt(0);
           }
 
-          // Add image URLs to form array
-          if (product.imageUrls && product.imageUrls.length > 0) {
-            product.imageUrls.forEach(url => {
-              this.imageUrlsArray.push(this.fb.control(url));
+          // Safely handle product data
+          if (product) {
+            // Add image URLs to form array
+            if (product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+              product.imageUrls.forEach(url => {
+                this.imageUrlsArray.push(this.fb.control(url));
+              });
+            } else {
+              this.imageUrlsArray.push(this.fb.control(''));
+            }
+
+            // Safe value patching
+            this.productForm.patchValue({
+              name: product.name || '',
+              price: product.price || 0,
+              categoryId: product.categoryId || '',
+              storeId: product.storeId || '',
+              description: product.description || '',
+              stockQuantity: product.stockQuantity || 1
             });
           } else {
+            // Handle empty product
+            this.error = 'Could not load product data.';
             this.imageUrlsArray.push(this.fb.control(''));
           }
-
-          this.productForm.patchValue({
-            name: product.name,
-            price: product.price,
-            categoryId: product.categoryId,
-            storeId: product.storeId,
-            description: product.description,
-            stockQuantity: product.stockQuantity
-          });
 
           this.loading = false;
         },
         error: err => {
           console.error('Failed to load product', err);
-          this.error = 'Product not found.';
+          this.error = 'Product not found or could not be loaded.';
           this.loading = false;
+          // Add at least one image field
+          if (this.imageUrlsArray.length === 0) {
+            this.imageUrlsArray.push(this.fb.control(''));
+          }
         }
       });
     }

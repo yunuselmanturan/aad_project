@@ -1,27 +1,64 @@
 <!-- features/seller-dashboard/components/products/seller-product-list/seller-product-list.component.html -->
 <h2>My Products</h2>
-<button (click)="addNew()">Add New Product</button>
-<app-loading-spinner *ngIf="loading"></app-loading-spinner>
-<app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
-<table *ngIf="!loading && products.length" class="prod-table">
-  <tr>
-    <th>Name</th>
-    <th>Price</th>
-    <th>Category</th>
-    <th>Stock</th>
-    <th>Store</th>
-    <th>Actions</th>
-  </tr>
-  <tr *ngFor="let p of products">
-    <td>{{ p.name }}</td>
-    <td>{{ p.price | money }}</td>
-    <td>{{ p.categoryName }}</td>
-    <td>{{ p.stockQuantity }}</td>
-    <td>{{ p.storeName }}</td>
-    <td>
-      <button (click)="editProduct(p)">Edit</button>
-      <button (click)="deleteProduct(p)">Delete</button>
-    </td>
-  </tr>
-</table>
-<p *ngIf="!loading && !products.length">No products yet.</p>
+<div class="action-buttons">
+  <button (click)="addNew()" class="btn-primary">Add New Product</button>
+  <button (click)="toggleArchivedProducts()" class="btn-secondary">
+    {{ showArchived ? 'Hide Archived Products' : 'Show Archived Products' }}
+  </button>
+</div>
+
+<!-- Active Products -->
+<div class="active-products">
+  <h3>Active Products</h3>
+  <app-loading-spinner *ngIf="loading"></app-loading-spinner>
+  <app-error-alert *ngIf="error" [errorMessage]="error"></app-error-alert>
+  <table *ngIf="!loading && products.length" class="prod-table">
+    <tr>
+      <th>Name</th>
+      <th>Price</th>
+      <th>Category</th>
+      <th>Stock</th>
+      <th>Store</th>
+      <th>Actions</th>
+    </tr>
+    <tr *ngFor="let p of products">
+      <td>{{ p.name }}</td>
+      <td>{{ p.price | money }}</td>
+      <td>{{ p.categoryName }}</td>
+      <td>{{ p.stockQuantity }}</td>
+      <td>{{ p.storeName }}</td>
+      <td>
+        <button (click)="editProduct(p)" class="btn-edit">Edit</button>
+        <button (click)="deleteProduct(p)" class="btn-delete">Archive</button>
+      </td>
+    </tr>
+  </table>
+  <p *ngIf="!loading && !products.length">No active products.</p>
+</div>
+
+<!-- Archived Products -->
+<div *ngIf="showArchived" class="archived-products">
+  <h3>Archived Products</h3>
+  <app-loading-spinner *ngIf="loadingArchived"></app-loading-spinner>
+  <table *ngIf="!loadingArchived && archivedProducts.length" class="prod-table archived">
+    <tr>
+      <th>Name</th>
+      <th>Price</th>
+      <th>Category</th>
+      <th>Stock</th>
+      <th>Store</th>
+      <th>Actions</th>
+    </tr>
+    <tr *ngFor="let p of archivedProducts">
+      <td>{{ p.name }}</td>
+      <td>{{ p.price | money }}</td>
+      <td>{{ p.categoryName }}</td>
+      <td>{{ p.stockQuantity }}</td>
+      <td>{{ p.storeName }}</td>
+      <td>
+        <button (click)="activateProduct(p)" class="btn-activate">Activate</button>
+      </td>
+    </tr>
+  </table>
+  <p *ngIf="!loadingArchived && !archivedProducts.length">No archived products.</p>
+</div>

@@ -63,6 +63,20 @@ public class SellerController {
         List<ProductDTO> products = productService.findSellerProducts(authentication);
         return ResponseEntity.ok(ApiResponse.success(products));
     }
+    
+    @GetMapping("/products/archived")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getSellerArchivedProducts(Authentication authentication) {
+        List<ProductDTO> products = productService.findSellerArchivedProducts(authentication);
+        return ResponseEntity.ok(ApiResponse.success("Archived products retrieved successfully", products));
+    }
+
+    @GetMapping("/products/{id}")
+    public ResponseEntity<ApiResponse<ProductDTO>> getProduct(
+            @PathVariable Long id,
+            Authentication authentication) {
+        ProductDTO product = productService.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Product retrieved successfully", product));
+    }
 
     @PostMapping("/products")
     public ResponseEntity<ApiResponse<ProductDTO>> createProduct(
@@ -85,8 +99,16 @@ public class SellerController {
     public ResponseEntity<ApiResponse<?>> deleteProduct(
             @PathVariable Long id,
             Authentication authentication) {
-        productService.deleteSellerProduct(id, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Product deleted", null));
+        productService.softDeleteSellerProduct(id, authentication);
+        return ResponseEntity.ok(ApiResponse.success("Product archived", null));
+    }
+    
+    @PutMapping("/products/{id}/activate")
+    public ResponseEntity<ApiResponse<?>> activateProduct(
+            @PathVariable Long id,
+            Authentication authentication) {
+        productService.activateSellerProduct(id, authentication);
+        return ResponseEntity.ok(ApiResponse.success("Product activated", null));
     }
 
     /* ---------- SHIPMENTS ---------- */

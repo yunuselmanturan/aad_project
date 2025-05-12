@@ -41,8 +41,21 @@ export class SellerService {
       .pipe(map(response => response.data));
   }
 
+  getArchivedProducts(): Observable<Product[]> {
+    return this.http.get<{data: Product[]}>(`${this.apiUrl}/seller/products/archived`)
+      .pipe(map(response => response.data));
+  }
+
   getProduct(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.apiUrl}/seller/products/${id}`);
+    return this.http.get<{data: Product}>(`${this.apiUrl}/seller/products/${id}`)
+      .pipe(
+        map(response => {
+          if (!response || !response.data) {
+            throw new Error('Product data not found');
+          }
+          return response.data;
+        })
+      );
   }
 
   createProduct(body: any): Observable<Product> {
@@ -51,16 +64,35 @@ export class SellerService {
   }
 
   updateProduct(id: number, body: any): Observable<Product> {
-    return this.http.put<Product>(`${this.apiUrl}/seller/products/${id}`, body);
+    return this.http.put<{data: Product}>(`${this.apiUrl}/seller/products/${id}`, body)
+      .pipe(
+        map(response => {
+          if (!response || !response.data) {
+            throw new Error('Product update failed');
+          }
+          return response.data;
+        })
+      );
   }
 
   deleteProduct(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/seller/products/${id}`);
   }
 
+  activateProduct(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/seller/products/${id}/activate`, {});
+  }
+
   getAllCategories(): Observable<{[k: string]: any}[]> {
     return this.http.get<{data: {[k: string]: any}[]}>(`${this.apiUrl}/categories`)
-      .pipe(map(response => response.data));
+      .pipe(
+        map(response => {
+          if (!response || !response.data) {
+            return [];
+          }
+          return response.data;
+        })
+      );
   }
 
   /* ───────────── orders ───────────── */

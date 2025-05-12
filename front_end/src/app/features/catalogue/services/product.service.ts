@@ -17,6 +17,7 @@ export interface Product {
   imageUrls?: string[];
   sellerId?: number;    // New field for seller
   sellerName?: string;  // New field for seller's name
+  deleted?: boolean;    // Whether the product is soft-deleted/archived
 }
 
 export interface ApiResponse<T> {

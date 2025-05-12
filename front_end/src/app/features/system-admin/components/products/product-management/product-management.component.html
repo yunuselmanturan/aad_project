@@ -6,6 +6,28 @@
 
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
 
+  <!-- View Selector -->
+  <div class="btn-group mb-3">
+    <button (click)="changeView('active')"
+            [class.btn-primary]="view === 'active'"
+            [class.btn-outline-primary]="view !== 'active'"
+            class="btn">
+      Active Products
+    </button>
+    <button (click)="changeView('archived')"
+            [class.btn-primary]="view === 'archived'"
+            [class.btn-outline-primary]="view !== 'archived'"
+            class="btn">
+      Archived Products
+    </button>
+    <button (click)="changeView('all')"
+            [class.btn-primary]="view === 'all'"
+            [class.btn-outline-primary]="view !== 'all'"
+            class="btn">
+      All Products
+    </button>
+  </div>
+
   <div *ngIf="loading" class="text-center my-5">
     <div class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
@@ -13,38 +35,88 @@
     <p>Loading products...</p>
   </div>
 
-  <div *ngIf="!loading && products.length === 0" class="alert alert-warning">
-    No products found.
+  <!-- Active Products -->
+  <div *ngIf="view === 'active' || view === 'all'">
+    <h3>Active Products</h3>
+    <div *ngIf="!loading && products.length === 0" class="alert alert-warning">
+      No active products found.
+    </div>
+
+    <div *ngIf="!loading && products.length > 0" class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Seller</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of products">
+            <td>{{ product.id }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.categoryName || product.categoryId }}</td>
+            <td>{{ product.price | currency }}</td>
+            <td>{{ product.stockQuantity }}</td>
+            <td>{{ product.sellerName || product.storeId }}</td>
+            <td>
+              <button (click)="removeProduct(product.id)" class="btn btn-sm btn-warning">
+                Archive
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <div *ngIf="!loading && products.length > 0" class="table-responsive">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Price</th>
-          <th>Stock</th>
-          <th>Seller</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let product of products">
-          <td>{{ product.id }}</td>
-          <td>{{ product.name }}</td>
-          <td>{{ product.categoryId }}</td>
-          <td>{{ product.price | currency }}</td>
-          <td>{{ product.stockQuantity }}</td>
-          <td>{{ product.storeId }}</td>
-          <td>
-            <button (click)="removeProduct(product.id)" class="btn btn-sm btn-danger">
-              Remove
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Archived Products -->
+  <div *ngIf="view === 'archived' || view === 'all'">
+    <h3>Archived Products</h3>
+    <div *ngIf="loadingArchived" class="text-center my-3">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p>Loading archived products...</p>
+    </div>
+
+    <div *ngIf="!loadingArchived && archivedProducts.length === 0" class="alert alert-warning">
+      No archived products found.
+    </div>
+
+    <div *ngIf="!loadingArchived && archivedProducts.length > 0" class="table-responsive">
+      <table class="table table-striped table-secondary">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Seller</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of archivedProducts">
+            <td>{{ product.id }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.categoryName || product.categoryId }}</td>
+            <td>{{ product.price | currency }}</td>
+            <td>{{ product.stockQuantity }}</td>
+            <td>{{ product.sellerName || product.storeId }}</td>
+            <td>
+              <button (click)="activateProduct(product.id)" class="btn btn-sm btn-success">
+                Activate
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

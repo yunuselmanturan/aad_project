@@ -41,7 +41,12 @@ import { ErrorAlertComponent } from './components/error-alert/error-alert.compon
     MoneyPipe,
     // Also export FormsModule, ReactiveFormsModule if needed widely
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    // Export Material modules
+    MatDialogModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule
   ]
 })
 export class SharedModule { }

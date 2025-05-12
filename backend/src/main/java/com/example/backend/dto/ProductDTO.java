@@ -25,4 +25,6 @@ public class ProductDTO {
 
     private Long sellerId;    // New field for seller
     private String sellerName; // New field for seller's name
+    
+    private Boolean deleted; // Flag to indicate if product is soft deleted
 }

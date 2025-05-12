@@ -114,16 +114,37 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(products));
     }
     
+    @GetMapping("/products/all")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllProductsIncludingDeleted() {
+        List<ProductDTO> products = productService.findAllIncludingDeleted();
+        return ResponseEntity.ok(ApiResponse.success("All products including archived", products));
+    }
+    
+    @GetMapping("/products/archived")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getArchivedProducts() {
+        List<ProductDTO> products = productService.findAllIncludingDeleted().stream()
+                .filter(p -> Boolean.TRUE.equals(p.getDeleted()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("Archived products", products));
+    }
+    
     @GetMapping("/products/{id}")
     public ResponseEntity<ApiResponse<ProductDTO>> getProductById(@PathVariable Long id) {
-        ProductDTO product = productService.findById(id);
+        // Admin should be able to see deleted products too
+        ProductDTO product = productService.validateAndGetProductDTO(id);
         return ResponseEntity.ok(ApiResponse.success(product));
     }
     
     @DeleteMapping("/products/{id}")
     public ResponseEntity<ApiResponse<?>> deleteProduct(@PathVariable Long id) {
-        productService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success("Product deleted successfully", null));
+        productService.softDelete(id);
+        return ResponseEntity.ok(ApiResponse.success("Product archived successfully", null));
+    }
+    
+    @PutMapping("/products/{id}/activate")
+    public ResponseEntity<ApiResponse<?>> activateProduct(@PathVariable Long id) {
+        productService.activate(id);
+        return ResponseEntity.ok(ApiResponse.success("Product activated successfully", null));
     }
     
     // System Statistics

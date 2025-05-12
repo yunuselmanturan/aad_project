@@ -1,6 +1,6 @@
 // features/catalogue/components/compare-dialog/compare-dialog.component.ts
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Product } from '../../services/product.service';
 
 @Component({
@@ -12,7 +12,10 @@ import { Product } from '../../services/product.service';
 export class CompareDialogComponent {
   products: Product[] = [];
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { products: Product[] }) {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: { products: Product[] },
+    private dialogRef: MatDialogRef<CompareDialogComponent>
+  ) {
     this.products = data.products;
   }
 
@@ -40,5 +43,10 @@ export class CompareDialogComponent {
       return '$' + value.toFixed(2);
     }
     return value?.toString() || 'N/A';
+  }
+
+  // Close the dialog
+  closeDialog(): void {
+    this.dialogRef.close();
   }
 }

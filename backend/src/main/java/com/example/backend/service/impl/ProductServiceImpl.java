@@ -50,6 +50,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDTO> findAll() {
         return productRepository.findAll().stream()
+                .filter(product -> product.getDeleted() == null || !product.getDeleted())
+                .map(this::mapProductToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductDTO> findAllIncludingDeleted() {
+        return productRepository.findAll().stream()
                 .map(this::mapProductToDTO)
                 .collect(Collectors.toList());
     }
@@ -58,6 +66,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO findById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        if (product.getDeleted() != null && product.getDeleted()) {
+            throw new ResourceNotFoundException("Product not found with id: " + id);
+        }
         
         return mapProductToDTO(product);
     }
@@ -68,6 +80,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
         
         return productRepository.findByCategory(category).stream()
+                .filter(product -> product.getDeleted() == null || !product.getDeleted())
                 .map(this::mapProductToDTO)
                 .collect(Collectors.toList());
     }
@@ -78,6 +91,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Store not found with id: " + storeId));
         
         return productRepository.findByStore(store).stream()
+                .filter(product -> product.getDeleted() == null || !product.getDeleted())
                 .map(this::mapProductToDTO)
                 .collect(Collectors.toList());
     }
@@ -85,6 +99,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDTO> search(String keyword) {
         return productRepository.search(keyword).stream()
+                .filter(product -> product.getDeleted() == null || !product.getDeleted())
                 .map(this::mapProductToDTO)
                 .collect(Collectors.toList());
     }
@@ -192,16 +207,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void delete(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        
-        // Delete associated images first
-        if (product.getImages() != null) {
-            productImageRepository.deleteAll(product.getImages());
-        }
-        
-        // Then delete the product
-        productRepository.delete(product);
+        softDelete(id);
     }
     
     @Override
@@ -281,6 +287,7 @@ public class ProductServiceImpl implements ProductService {
         }
         
         return products.stream()
+                .filter(product -> product.getDeleted() == null || !product.getDeleted())
                 .map(this::mapProductToDTO)
                 .collect(Collectors.toList());
     }
@@ -358,44 +365,53 @@ public class ProductServiceImpl implements ProductService {
             product.setCategory(category);
         }
 
-        Product savedProduct = productRepository.save(product);
-
-        // Update images if provided (similar logic)
-        if (productDTO.getImageUrls() != null) {
-            // Remove old images
-            if (savedProduct.getImages() != null) {
-                productImageRepository.deleteAll(savedProduct.getImages());
+        // Update store if provided and belongs to seller
+        if (productDTO.getStoreId() != null) {
+            Store store = storeRepository.findById(productDTO.getStoreId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Store not found with id: " + productDTO.getStoreId()));
+            
+            if (!store.getSeller().getId().equals(seller.getId())) {
+                throw new AccessDeniedException("You can only use your own stores");
             }
-            List<ProductImage> images = new ArrayList<>();
-            for (int i = 0; i < productDTO.getImageUrls().size(); i++) {
-                ProductImage image = new ProductImage();
-                image.setProduct(savedProduct);
-                image.setImageUrl(productDTO.getImageUrls().get(i));
-                image.setPrimaryImage(i == 0);
-                images.add(productImageRepository.save(image));
-            }
-            savedProduct.setImages(images);
+            
+            product.setStore(store);
         }
-
-        return mapProductToDTO(savedProduct);
+        
+        // Save the product without images
+        // Important: temporarily set images to null to avoid cascading operations
+        List<ProductImage> existingImages = product.getImages();
+        product.setImages(null);
+        product = productRepository.save(product);
+        
+        // Delete existing images manually using repository methods
+        if (existingImages != null && !existingImages.isEmpty()) {
+            productImageRepository.deleteAll(existingImages);
+        }
+        
+        // Create and save new images
+        List<ProductImage> newImages = new ArrayList<>();
+        if (productDTO.getImageUrls() != null) {
+            for (int i = 0; i < productDTO.getImageUrls().size(); i++) {
+                String url = productDTO.getImageUrls().get(i);
+                if (url != null && !url.trim().isEmpty()) {
+                    ProductImage image = new ProductImage(product, url, i == 0);
+                    image = productImageRepository.save(image);
+                    newImages.add(image);
+                }
+            }
+        }
+        
+        // Set the new images and save again
+        product.setImages(newImages);
+        Product updatedProduct = productRepository.save(product);
+        
+        return mapProductToDTO(updatedProduct);
     }
     
     @Override
     @Transactional
     public void deleteSellerProduct(Long id, Authentication authentication) {
-        User seller = (User) authentication.getPrincipal();
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-
-        if (!product.getSeller().getId().equals(seller.getId())) {
-            throw new AccessDeniedException("You can only delete your own products");
-        }
-
-        // Delete images and product
-        if (product.getImages() != null) {
-            productImageRepository.deleteAll(product.getImages());
-        }
-        productRepository.delete(product);
+        softDeleteSellerProduct(id, authentication);
     }
     
     @Override
@@ -431,12 +447,88 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     public ProductDTO validateAndGetProductDTO(Long id) {
-        return findById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        return mapProductToDTO(product);
     }
     
     @Override
     public List<ProductDTO> findProductsByStore(Long storeId) {
         return findByStore(storeId);
+    }
+    
+    @Override
+    public List<ProductDTO> findSellerArchivedProducts(Authentication authentication) {
+        User seller = (User) authentication.getPrincipal();
+        
+        // Find stores owned by this seller
+        List<Store> sellerStores = storeRepository.findBySeller(seller);
+        
+        if (sellerStores.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // Get products from all seller's stores
+        List<Product> products = new ArrayList<>();
+        for (Store store : sellerStores) {
+            products.addAll(productRepository.findByStore(store));
+        }
+        
+        return products.stream()
+                .filter(product -> product.getDeleted() != null && product.getDeleted())
+                .map(this::mapProductToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional
+    public void softDelete(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        product.setDeleted(true);
+        productRepository.save(product);
+    }
+    
+    @Override
+    @Transactional
+    public void activate(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        product.setDeleted(false);
+        productRepository.save(product);
+    }
+    
+    @Override
+    @Transactional
+    public void softDeleteSellerProduct(Long id, Authentication authentication) {
+        User seller = (User) authentication.getPrincipal();
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        if (!product.getSeller().getId().equals(seller.getId())) {
+            throw new AccessDeniedException("You can only delete your own products");
+        }
+
+        product.setDeleted(true);
+        productRepository.save(product);
+    }
+    
+    @Override
+    @Transactional
+    public void activateSellerProduct(Long id, Authentication authentication) {
+        User seller = (User) authentication.getPrincipal();
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        if (!product.getSeller().getId().equals(seller.getId())) {
+            throw new AccessDeniedException("You can only activate your own products");
+        }
+
+        product.setDeleted(false);
+        productRepository.save(product);
     }
     
     private ProductDTO mapProductToDTO(Product product) {
@@ -447,6 +539,7 @@ public class ProductServiceImpl implements ProductService {
         productDTO.setDescription(product.getDescription());
         productDTO.setPrice(product.getPrice());
         productDTO.setStockQuantity(product.getStockQuantity());
+        productDTO.setDeleted(product.getDeleted());
 
         if (product.getStore() != null) {
             productDTO.setStoreId(product.getStore().getId());
